@@ -8,22 +8,31 @@ import 'crear_productos_controllers/CrearProductoController.dart';
 
 class CrearProducto extends StatefulWidget {
   final CollectionReference collectionReferenceProductos;
-  final String ?idCodigoDeBarra;
-  const CrearProducto({Key? key, required this.collectionReferenceProductos, required this.idCodigoDeBarra})
+  final String? idCodigoDeBarra;
+  const CrearProducto(
+      {Key? key,
+      required this.collectionReferenceProductos,
+      required this.idCodigoDeBarra})
       : super(key: key);
 
   @override
-  State<CrearProducto> createState() => _CrearProductoState( idCodigoDeBarra: idCodigoDeBarra,
+  State<CrearProducto> createState() => _CrearProductoState(
+      idCodigoDeBarra: idCodigoDeBarra,
       collectionReferenceProductos: collectionReferenceProductos);
 }
 
 class _CrearProductoState extends State<CrearProducto> {
   final CollectionReference<Object?> collectionReferenceProductos;
   final String? idCodigoDeBarra;
-  _CrearProductoState( { required this.idCodigoDeBarra, required this.collectionReferenceProductos});
+  _CrearProductoState(
+      {required this.idCodigoDeBarra,
+      required this.collectionReferenceProductos});
 
-
-  late CrearProductoController crearProductoController = CrearProductoController(colleccionReferenceProductos: collectionReferenceProductos, idCodigoBarra: idCodigoDeBarra);
+  late CrearProductoController crearProductoController =
+      CrearProductoController(
+          colleccionReferenceProductos: collectionReferenceProductos,
+          idCodigoBarra: idCodigoDeBarra,
+          setState: setState, context: context);
 
   var nombreController = TextEditingController();
 
@@ -87,16 +96,18 @@ class _CrearProductoState extends State<CrearProducto> {
           height: Pantalla.getPorcentPanntalla(8, context, 'y'),
         ),
         TextField(
+          maxLength: 35,
           controller: nombreController,
           decoration: const InputDecoration(
               label: Text('Nombre'),
               hintText: 'Escribe el nombre del producto aquí  aquí'),
         ),
-        //mostrarErrorNomre(),
+        crearProductoController.mostrarError(campo: 1),
         SizedBox(
           height: Pantalla.getPorcentPanntalla(3, context, 'y'),
         ),
         TextField(
+          maxLength: 9,
           keyboardType: TextInputType.number,
           controller: precioCompraController,
           decoration: InputDecoration(
@@ -104,12 +115,13 @@ class _CrearProductoState extends State<CrearProducto> {
               hintText: 'Escribe el precio de compra  aquí'),
           onSubmitted: (String value) {},
         ),
-        //mostrarErrorDireccion(),
+        crearProductoController.mostrarError(campo: 2),
 
         SizedBox(
           height: Pantalla.getPorcentPanntalla(3, context, 'y'),
         ),
         TextField(
+          maxLength: 9,
           keyboardType: TextInputType.number,
           controller: precioVentaController,
           decoration: InputDecoration(
@@ -117,11 +129,12 @@ class _CrearProductoState extends State<CrearProducto> {
               hintText: 'Escribe el precio de venta aquí'),
           onSubmitted: (String value) {},
         ),
-        //mostrarErrorDireccion(),
+        crearProductoController.mostrarError(campo: 3),
         SizedBox(
           height: Pantalla.getPorcentPanntalla(3, context, 'y'),
         ),
         TextField(
+          maxLength: 9,
           keyboardType: TextInputType.number,
           controller: medidaController,
           decoration: InputDecoration(
@@ -129,7 +142,7 @@ class _CrearProductoState extends State<CrearProducto> {
           ),
           onSubmitted: (String value) {},
         ),
-        //mostrarErrorDireccion(),
+        crearProductoController.mostrarError(campo: 4),
         SizedBox(
           height: Pantalla.getPorcentPanntalla(5, context, 'y'),
         ),
@@ -141,15 +154,14 @@ class _CrearProductoState extends State<CrearProducto> {
     return ElevatedButton(
         onPressed: () {
           datosProducto = {
-            'nombre_producto': nombreController.text ,
-            'precio_compra': double.parse(precioCompraController.text),
-            'precio_venta':  double.parse(precioVentaController.text),
-            'stock':  double.parse(medidaController.text),
+            'nombre_producto': nombreController.text,
+            'precio_compra': precioCompraController.text,
+            'precio_venta': precioVentaController.text,
+            'stock': medidaController.text,
             'tipo': _currentSelection,
           };
 
           crearProductoController.crearProducto(datosProducto: datosProducto);
-
         },
         child: Text('Guardar'));
   }
