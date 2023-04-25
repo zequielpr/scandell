@@ -1,0 +1,19 @@
+{
+  "menu_negocio": "Negocio",
+  "@helloWorld": {
+    "description": "The conventional newborn programmer greeting"
+  },
+
+  "menu_vender": "Sell",
+    "@helloWorld": {
+      "description": "Menu de vender"
+    },
+  "menu_perfil": "Profile",
+      "@helloWorld": {
+        "description": "Menu de vender"
+      },
+   "crear_negocio": "Create business",
+        "@helloWorld": {
+          "description": "Menu de vender"
+        }
+}
