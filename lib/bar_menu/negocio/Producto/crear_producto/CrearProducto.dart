@@ -4,6 +4,7 @@ import 'package:material_segmented_control/material_segmented_control.dart';
 import 'package:scasell/MediaQuery.dart';
 
 import '../../../../Estilo/Colores.dart';
+import '../../../../Estilo/Theme.dart';
 import 'crear_productos_controllers/CrearProductoController.dart';
 
 class CrearProducto extends StatefulWidget {
@@ -32,7 +33,8 @@ class _CrearProductoState extends State<CrearProducto> {
       CrearProductoController(
           colleccionReferenceProductos: collectionReferenceProductos,
           idCodigoBarra: idCodigoDeBarra,
-          setState: setState, context: context);
+          setState: setState,
+          context: context);
 
   var nombreController = TextEditingController();
 
@@ -40,6 +42,7 @@ class _CrearProductoState extends State<CrearProducto> {
   var precioVentaController = TextEditingController();
   var medidaController = TextEditingController();
   String tipoMedida = 'Unidad';
+  var espacioEntreFields = 2.0;
 
   Map<String, dynamic> datosProducto = {};
 
@@ -57,15 +60,20 @@ class _CrearProductoState extends State<CrearProducto> {
             child: Center(
               child: Column(
                 children: [
-                  _getSeleccionTipo(),
+                  //_getSeleccionTipo(),
                   _getAddImg(),
                   getTextFields(),
-                  _getBotonGuardar()
+                  _getBotonGuardar(),
+                  _getSizeBox()
                 ],
               ),
             ),
           ),
         ));
+  }
+
+  _getSizeBox(){
+    return SizedBox(height: Pantalla.getPorcentPanntalla(5, context, 'y'),);
   }
 
   _getAddImg() {
@@ -100,58 +108,58 @@ class _CrearProductoState extends State<CrearProducto> {
           controller: nombreController,
           decoration: const InputDecoration(
               label: Text('Nombre'),
-              hintText: 'Escribe el nombre del producto aquí  aquí'),
+              hintText: 'Escribe el nombre del producto aquí'),
         ),
         crearProductoController.mostrarError(campo: 1),
         SizedBox(
-          height: Pantalla.getPorcentPanntalla(3, context, 'y'),
+          height: Pantalla.getPorcentPanntalla(espacioEntreFields, context, 'y'),
         ),
         TextField(
-          maxLength: 9,
+          maxLength: 6,
           keyboardType: TextInputType.number,
           controller: precioCompraController,
           decoration: InputDecoration(
-              label: Text('Precio de compra por $tipoMedida'),
+              label: Text('Precio de compra'),
               hintText: 'Escribe el precio de compra  aquí'),
           onSubmitted: (String value) {},
         ),
         crearProductoController.mostrarError(campo: 2),
-
         SizedBox(
-          height: Pantalla.getPorcentPanntalla(3, context, 'y'),
+          height: Pantalla.getPorcentPanntalla(espacioEntreFields, context, 'y'),
         ),
         TextField(
-          maxLength: 9,
+          maxLength: 6,
           keyboardType: TextInputType.number,
           controller: precioVentaController,
-          decoration: InputDecoration(
-              label: Text('Precio de venta por $tipoMedida'),
+          decoration: const InputDecoration(
+              label: Text('Precio de venta'),
               hintText: 'Escribe el precio de venta aquí'),
           onSubmitted: (String value) {},
         ),
         crearProductoController.mostrarError(campo: 3),
         SizedBox(
-          height: Pantalla.getPorcentPanntalla(3, context, 'y'),
+          height: Pantalla.getPorcentPanntalla(espacioEntreFields, context, 'y'),
         ),
         TextField(
-          maxLength: 9,
+          maxLength: 6,
           keyboardType: TextInputType.number,
           controller: medidaController,
           decoration: InputDecoration(
-            label: Text('$tipoMedida/s'),
+            label: Text('Unidad/es'),
           ),
           onSubmitted: (String value) {},
         ),
         crearProductoController.mostrarError(campo: 4),
         SizedBox(
-          height: Pantalla.getPorcentPanntalla(5, context, 'y'),
+          height: Pantalla.getPorcentPanntalla(espacioEntreFields, context, 'y'),
         ),
       ],
     );
   }
 
   _getBotonGuardar() {
-    return ElevatedButton(
+
+    var button = ElevatedButton(
         onPressed: () {
           datosProducto = {
             'nombre_producto': nombreController.text,
@@ -160,10 +168,12 @@ class _CrearProductoState extends State<CrearProducto> {
             'stock': medidaController.text,
             'tipo': _currentSelection,
           };
-
           crearProductoController.crearProducto(datosProducto: datosProducto);
         },
         child: Text('Guardar'));
+
+    return Stilos.darSizeButton(context: context, button: button);
+
   }
 
   int _currentSelection = 0;

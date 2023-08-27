@@ -73,6 +73,7 @@ class ProductoController {
                   style: TextStyle(fontSize: 25),
                 ),
                 subtitle: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Icon(
                       Icons.shopping_basket_outlined,
