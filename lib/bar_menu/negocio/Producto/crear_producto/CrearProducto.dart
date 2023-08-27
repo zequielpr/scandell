@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:material_segmented_control/material_segmented_control.dart';
@@ -5,7 +7,9 @@ import 'package:scasell/MediaQuery.dart';
 
 import '../../../../Estilo/Colores.dart';
 import '../../../../Estilo/Theme.dart';
+import 'crear_productos_controllers/AddImageController.dart';
 import 'crear_productos_controllers/CrearProductoController.dart';
+import 'package:image_picker/image_picker.dart';
 
 class CrearProducto extends StatefulWidget {
   final CollectionReference collectionReferenceProductos;
@@ -44,6 +48,17 @@ class _CrearProductoState extends State<CrearProducto> {
   String tipoMedida = 'Unidad';
   var espacioEntreFields = 2.0;
 
+  late AddImageController imagePicker =
+      AddImageController(context: context, mostrarImagen: mostrarImagen);
+
+  XFile? image;
+  mostrarImagen(var image) {
+    print('holaaaa${image!.path}');
+    setState(() {
+      this.image = image;
+    });
+  }
+
   Map<String, dynamic> datosProducto = {};
 
   @override
@@ -72,27 +87,56 @@ class _CrearProductoState extends State<CrearProducto> {
         ));
   }
 
-  _getSizeBox(){
-    return SizedBox(height: Pantalla.getPorcentPanntalla(5, context, 'y'),);
+  _getSizeBox() {
+    return SizedBox(
+      height: Pantalla.getPorcentPanntalla(5, context, 'y'),
+    );
   }
+
+  //onTap: () => imagePicker.pickImage(),
 
   _getAddImg() {
     return Column(
       children: [
-        SizedBox(
-          height: Pantalla.getPorcentPanntalla(10, context, 'y'),
-        ),
-        Transform.scale(
-          scale: 5,
-          child: InkWell(
-            onTap: () {
-              print('object');
-            },
-            child: const Icon(
-              Icons.add_photo_alternate_outlined,
-            ),
+        FittedBox(
+          child: ElevatedButton(
+            style: ButtonStyle(
+              elevation: MaterialStateProperty.all(0),
+                padding: MaterialStateProperty.all(EdgeInsets.all(4)),
+                visualDensity: VisualDensity.comfortable,
+                maximumSize: MaterialStateProperty.all(Size.fromWidth(300)),
+                backgroundColor: MaterialStateProperty.all(Colors.transparent)),
+            onPressed: () => imagePicker.pickImage(),
+            child: image != null
+                ? Container(
+                    constraints: BoxConstraints.tight(Size(
+                        Pantalla.getPorcentPanntalla(30, context, 'x'),
+                        Pantalla.getPorcentPanntalla(20, context, 'y'))),
+                    child: Card(
+                      shape: RoundedRectangleBorder(
+                        side: BorderSide(
+                          width: 2,
+                          color: Colores.colorPrincipal,
+                        ),
+                        borderRadius: BorderRadius.all(Radius.circular(5)),
+                      ),
+                      elevation: 0,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(5),
+                        child: Image.file(
+                          //to show image, you type like this.
+                          File(image!.path),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  )
+                : Icon(
+                    Icons.add_photo_alternate_outlined,
+                    size: 50, color: Colors.black54,
+                  ),
           ),
-        )
+        ),
       ],
     );
   }
@@ -101,7 +145,7 @@ class _CrearProductoState extends State<CrearProducto> {
     return Column(
       children: [
         SizedBox(
-          height: Pantalla.getPorcentPanntalla(8, context, 'y'),
+          height: Pantalla.getPorcentPanntalla(4, context, 'y'),
         ),
         TextField(
           maxLength: 35,
@@ -112,7 +156,8 @@ class _CrearProductoState extends State<CrearProducto> {
         ),
         crearProductoController.mostrarError(campo: 1),
         SizedBox(
-          height: Pantalla.getPorcentPanntalla(espacioEntreFields, context, 'y'),
+          height:
+              Pantalla.getPorcentPanntalla(espacioEntreFields, context, 'y'),
         ),
         TextField(
           maxLength: 6,
@@ -125,7 +170,8 @@ class _CrearProductoState extends State<CrearProducto> {
         ),
         crearProductoController.mostrarError(campo: 2),
         SizedBox(
-          height: Pantalla.getPorcentPanntalla(espacioEntreFields, context, 'y'),
+          height:
+              Pantalla.getPorcentPanntalla(espacioEntreFields, context, 'y'),
         ),
         TextField(
           maxLength: 6,
@@ -138,7 +184,8 @@ class _CrearProductoState extends State<CrearProducto> {
         ),
         crearProductoController.mostrarError(campo: 3),
         SizedBox(
-          height: Pantalla.getPorcentPanntalla(espacioEntreFields, context, 'y'),
+          height:
+              Pantalla.getPorcentPanntalla(espacioEntreFields, context, 'y'),
         ),
         TextField(
           maxLength: 6,
@@ -151,14 +198,14 @@ class _CrearProductoState extends State<CrearProducto> {
         ),
         crearProductoController.mostrarError(campo: 4),
         SizedBox(
-          height: Pantalla.getPorcentPanntalla(espacioEntreFields, context, 'y'),
+          height:
+              Pantalla.getPorcentPanntalla(espacioEntreFields, context, 'y'),
         ),
       ],
     );
   }
 
   _getBotonGuardar() {
-
     var button = ElevatedButton(
         onPressed: () {
           datosProducto = {
@@ -173,7 +220,6 @@ class _CrearProductoState extends State<CrearProducto> {
         child: Text('Guardar'));
 
     return Stilos.darSizeButton(context: context, button: button);
-
   }
 
   int _currentSelection = 0;

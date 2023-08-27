@@ -85,11 +85,11 @@ class ProductoController {
                         precioVenta: data['precio_venta']),
                     Text('${data['precio_venta']}       '),
                     Icon(
-                      Icons.circle,
+                      Icons.list,
                       size: 15,
                     ),
                     Text(
-                        '${data['stock']}   ${_comprobarTipo(tipo: data['tipo'])}')
+                        '${data['stock']}')
                   ],
                 ),
               );
