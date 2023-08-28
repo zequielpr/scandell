@@ -46,7 +46,9 @@ class _ProductoState extends State<Producto> {
 
 
   _getOpcionesCrearProducto(){
-    return  StatefulBuilder(
+    return IconButton(onPressed: ()=> productoController.scanearproducto(context: context, mounted: mounted), icon: Icon(Icons.add));
+
+    /*return  StatefulBuilder(
         builder: (BuildContext context, StateSetter setState) {
           return PopupMenuButton<MenuOpcionesCrearProducto>(
             child: Icon(Icons.add_box_outlined),
@@ -68,7 +70,7 @@ class _ProductoState extends State<Producto> {
                   onTap: () => productoController.navegarToCrearProducto(context: context),
                 )
               ]);
-        });
+        });*/
   }
 
 
