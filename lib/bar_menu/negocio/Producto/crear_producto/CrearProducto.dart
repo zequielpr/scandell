@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -76,7 +77,7 @@ class _CrearProductoState extends State<CrearProducto> {
               child: Column(
                 children: [
                   //_getSeleccionTipo(),
-                  _getAddImg(),
+                  //_getAddImg(),
                   getTextFields(),
                   _getBotonGuardar(),
                   _getSizeBox()

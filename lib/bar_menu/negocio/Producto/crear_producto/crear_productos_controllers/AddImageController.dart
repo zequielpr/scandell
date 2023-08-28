@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -5,6 +8,7 @@ class AddImageController {
   BuildContext _context;
   var _mostrarImagen;
   final ImagePicker picker = ImagePicker();
+  dynamic bytes = '';
 
   AddImageController({required BuildContext context, required var mostrarImagen}) : _context = context, _mostrarImagen = mostrarImagen;
 
@@ -53,10 +57,22 @@ class AddImageController {
         });
   }
 
+
+
   Future getImage(ImageSource media) async {
     var image = await picker.pickImage(source: media);
 
-
     _mostrarImagen(image);
+
+    //Pasar imagen a bytes
+    bytes = await image!.readAsBytes();
+    print('Bytes ${bytes.runtimeType}');
+
+    //Pasar bytes a imagen
+    //var imageFromBytes = Image.memory(bytes);
+  }
+
+  getBytes(){
+    return bytes;
   }
 }
