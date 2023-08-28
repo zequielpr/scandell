@@ -42,7 +42,7 @@ class ProductoController {
     if (!mounted) return;
   }
 
-  getListaProductos({required BuildContext context}) {
+  getListaProductos({required BuildContext context, required var mounted}) {
     var _listaProducto = documentSnapshotNegocio.reference
         .collection('productos')
         .snapshots(includeMetadataChanges: true);
@@ -62,36 +62,36 @@ class ProductoController {
             children: snapshot.data!.docs.map((DocumentSnapshot document) {
               Map<String, dynamic> data =
                   document.data()! as Map<String, dynamic>;
-              return ListTile(
-                onTap: () {},
-                leading: const Icon(
-                  Icons.image,
-                  size: 30,
-                ),
-                title: Text(
-                  data['nombre_producto'],
-                  style: TextStyle(fontSize: 25),
-                ),
-                subtitle: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Icon(
-                      Icons.shopping_basket_outlined,
-                      size: 15,
+              return Column(
+                children: [
+                  ListTile(
+                    onTap: () {},
+                    title: Text(
+                      data['nombre_producto'],
+                      style: TextStyle(fontSize: 25),
                     ),
-                    Text('${data['precio_compra']}       '),
-                    _comprobarPrecioVenta(
-                        precioCompra: data['precio_compra'],
-                        precioVenta: data['precio_venta']),
-                    Text('${data['precio_venta']}       '),
-                    Icon(
-                      Icons.list,
-                      size: 15,
+                    subtitle: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Icon(
+                          Icons.shopping_basket_outlined,
+                          size: 15,
+                        ),
+                        Text('${data['precio_venta']}  € x U    '),
+                        _comprobarPrecioVenta(
+                            precioCompra: data['precio_compra'],
+                            precioVenta: data['precio_venta']),
+                        Text('${data['precio_venta']-data['precio_compra']}  €  x U  '),
+                        Icon(
+                          Icons.list,
+                          size: 15,
+                        ),
+                        Text('${data['stock']}  U')
+                      ],
                     ),
-                    Text(
-                        '${data['stock']}')
-                  ],
-                ),
+                  ),
+                  const Divider(thickness: 1,)
+                ],
               );
             }).toList(),
           );
@@ -107,7 +107,8 @@ class ProductoController {
                         backgroundColor:
                             MaterialStateProperty.all(Colors.transparent),
                         elevation: MaterialStateProperty.all(0)),
-                    onPressed: () => navegarToCrearProducto(context: context),
+                    onPressed: () =>
+                        scanearproducto(context: context, mounted: mounted),
                     child: Icon(Icons.add,
                         color: Colors.black,
                         size: Pantalla.getPorcentPanntalla(

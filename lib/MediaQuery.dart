@@ -13,6 +13,6 @@ class Pantalla{
   }
 
   static getMarginLeftRight({required BuildContext context}){
-    return Pantalla.getPorcentPanntalla(3.5, context, 'y');
+    return Pantalla.getPorcentPanntalla(2, context, 'y');
   }
 }

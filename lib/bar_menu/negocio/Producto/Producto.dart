@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:scasell/MediaQuery.dart';
 
 import '../controllers/negocioController.dart';
 import 'controllers/ProductoController.dart';
@@ -37,8 +38,9 @@ class _ProductoState extends State<Producto> {
       ),
       body: Center(
         child: Container(
+          margin: EdgeInsets.all(Pantalla.getMarginLeftRight(context: context)),
             child: Center(
-          child: productoController.getListaProductos(context: context),
+          child: productoController.getListaProductos(context: context, mounted: mounted),
         )),
       ),
     );
