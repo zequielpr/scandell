@@ -107,7 +107,6 @@ class CrearProductoController {
         break;
       case 2:
         if (campo == _campoEmty) {
-
           return const Align(
             alignment: Alignment.centerLeft,
             child: Text(
@@ -190,5 +189,23 @@ class CrearProductoController {
     }
 
     return const Text('');
+  }
+
+  //Actualizar datos del producto
+  actualizardatos({required Map<String, dynamic> datosProducto}) {
+    _comprobarDatos(datosProducto: datosProducto);
+
+    if (_campoEmty == 0 && _isNonum == 0) {
+      datosProducto['precio_compra'] = precio_compra;
+      datosProducto['precio_venta'] = precio_venta;
+      datosProducto['stock'] = stock;
+
+      DocumentReference documentProduct =
+          _colleccionReferenceProductos.doc(_idCodigoBarra);
+      DB
+          .update(document: documentProduct, datos: datosProducto)
+          .whenComplete(() => _context.router.navigateBack());
+    }
+    print('Campo vacío: $_campoEmty \n como no numero: $_isNonum');
   }
 }

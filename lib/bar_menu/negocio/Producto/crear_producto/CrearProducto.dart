@@ -30,6 +30,7 @@ class CrearProducto extends StatefulWidget {
 class _CrearProductoState extends State<CrearProducto> {
   final CollectionReference<Object?> collectionReferenceProductos;
   final String? idCodigoDeBarra;
+
   _CrearProductoState(
       {required this.idCodigoDeBarra,
       required this.collectionReferenceProductos});
@@ -45,7 +46,7 @@ class _CrearProductoState extends State<CrearProducto> {
 
   var precioCompraController = TextEditingController();
   var precioVentaController = TextEditingController();
-  var medidaController = TextEditingController();
+  var stockController = TextEditingController();
   String tipoMedida = 'Unidad';
   var espacioEntreFields = 2.0;
 
@@ -61,12 +62,21 @@ class _CrearProductoState extends State<CrearProducto> {
   }
 
   Map<String, dynamic> datosProducto = {};
+  bool _updateProduct = false;
 
+  initState(){
+    _datos_to_textControllers();
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
           title: Text('Crear producto'),
+          actions: [
+            _updateProduct
+                ? IconButton(onPressed: () {}, icon: Icon(Icons.delete))
+                : Text('')
+          ],
         ),
         body: SingleChildScrollView(
           child: Container(
@@ -102,7 +112,7 @@ class _CrearProductoState extends State<CrearProducto> {
         FittedBox(
           child: ElevatedButton(
             style: ButtonStyle(
-              elevation: MaterialStateProperty.all(0),
+                elevation: MaterialStateProperty.all(0),
                 padding: MaterialStateProperty.all(EdgeInsets.all(4)),
                 visualDensity: VisualDensity.comfortable,
                 maximumSize: MaterialStateProperty.all(Size.fromWidth(300)),
@@ -134,7 +144,8 @@ class _CrearProductoState extends State<CrearProducto> {
                   )
                 : Icon(
                     Icons.add_photo_alternate_outlined,
-                    size: 50, color: Colors.black54,
+                    size: 50,
+                    color: Colors.black54,
                   ),
           ),
         ),
@@ -142,7 +153,28 @@ class _CrearProductoState extends State<CrearProducto> {
     );
   }
 
-  Widget getTextFields() {
+  _datos_to_textControllers() {
+    var prodcutDocument = collectionReferenceProductos.doc(idCodigoDeBarra);
+
+    prodcutDocument.get().then((DocumentSnapshot documentSnapshot) => {
+          if (documentSnapshot.exists)
+            {
+              setState((){}),
+              _updateProduct = true,
+              nombreController.text =
+                  documentSnapshot['nombre_producto'].toString(),
+              precioCompraController.text =
+                  documentSnapshot['precio_compra'].toString(),
+              precioVentaController.text =
+                  documentSnapshot['precio_venta'].toString(),
+              stockController.text = documentSnapshot['stock'].toString(),
+
+              //
+            }
+        });
+  }
+
+  getTextFields() {
     return Column(
       children: [
         SizedBox(
@@ -191,7 +223,7 @@ class _CrearProductoState extends State<CrearProducto> {
         TextField(
           maxLength: 6,
           keyboardType: TextInputType.number,
-          controller: medidaController,
+          controller: stockController,
           decoration: InputDecoration(
             label: Text('Unidad/es'),
           ),
@@ -199,8 +231,8 @@ class _CrearProductoState extends State<CrearProducto> {
         ),
         crearProductoController.mostrarError(campo: 4),
         SizedBox(
-          height:
-              Pantalla.getPorcentPanntalla(espacioEntreFields, context, 'y'),
+          height: Pantalla.getPorcentPanntalla(
+              espacioEntreFields + 3, context, 'y'),
         ),
       ],
     );
@@ -213,12 +245,18 @@ class _CrearProductoState extends State<CrearProducto> {
             'nombre_producto': nombreController.text,
             'precio_compra': precioCompraController.text,
             'precio_venta': precioVentaController.text,
-            'stock': medidaController.text,
+            'stock': stockController.text,
             'tipo': _currentSelection,
           };
-          crearProductoController.crearProducto(datosProducto: datosProducto);
+
+          if (_updateProduct) {
+            crearProductoController.actualizardatos(
+                datosProducto: datosProducto);
+          } else {
+            crearProductoController.crearProducto(datosProducto: datosProducto);
+          }
         },
-        child: Text('Guardar'));
+        child: Text(_updateProduct ? 'Actualizar' : 'Guardar'));
 
     return Stilos.darSizeButton(context: context, button: button);
   }

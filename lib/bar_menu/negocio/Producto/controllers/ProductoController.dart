@@ -9,6 +9,7 @@ import '../../../../MediaQuery.dart';
 import '../../../../db/db.dart';
 
 class ProductoController {
+
   DocumentSnapshot documentSnapshotNegocio;
   ProductoController({required this.documentSnapshotNegocio});
 
@@ -65,7 +66,7 @@ class ProductoController {
               return Column(
                 children: [
                   ListTile(
-                    onTap: () {},
+                    onTap: () => navegarToCrearProducto(context: context, idProducto: document.id),
                     title: Text(
                       data['nombre_producto'],
                       style: TextStyle(fontSize: 25),
@@ -73,24 +74,15 @@ class ProductoController {
                     subtitle: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Icon(
-                          Icons.shopping_basket_outlined,
-                          size: 15,
-                        ),
-                        Text('${data['precio_venta']}  € x U    '),
-                        _comprobarPrecioVenta(
-                            precioCompra: data['precio_compra'],
-                            precioVenta: data['precio_venta']),
-                        Text('${data['precio_venta']-data['precio_compra']}  €  x U  '),
-                        Icon(
-                          Icons.list,
-                          size: 15,
-                        ),
-                        Text('${data['stock']}  U')
+                        _getPrecioVenta(data, context),
+                        _getProfit(data, context),
+                        _getStock(data, context)
                       ],
                     ),
                   ),
-                  const Divider(thickness: 1,)
+                  const Divider(
+                    thickness: 1,
+                  )
                 ],
               );
             }).toList(),
@@ -122,12 +114,55 @@ class ProductoController {
     );
   }
 
+  _getPrecioVenta(Map<String, dynamic> data, BuildContext context) {
+    return Row(
+      children: [
+        const Icon(
+          Icons.shopping_basket_outlined,
+          size: 15,
+        ),
+        SizedBox(width: Pantalla.getPorcentPanntalla(1, context, 'x'),),
+        Text('${data['precio_venta']}  € x U    '),
+      ],
+    );
+  }
+
+  _getProfit(Map<String, dynamic> data, BuildContext context) {
+    return Row(
+      children: [
+        _comprobarPrecioVenta(
+            precioCompra: data['precio_compra'],
+            precioVenta: data['precio_venta']),
+        SizedBox(width: Pantalla.getPorcentPanntalla(1, context, 'x'),),
+        Text('${data['precio_venta'] - data['precio_compra']}  € x U  ')
+      ],
+    );
+  }
+
+  _getStock(Map<String, dynamic> data, BuildContext context) {
+    return Row(
+      children: [
+        const Icon(
+          Icons.list,
+          size: 15,
+        ),
+        SizedBox(width: Pantalla.getPorcentPanntalla(1, context, 'x'),),
+        Text('${data['stock']}  U')
+      ],
+    );
+  }
+
+
+  var color_profit;
   _comprobarPrecioVenta(
       {required double precioCompra, required double precioVenta}) {
+
     if (precioCompra > precioVenta) {
-      return const Icon(Icons.trending_down, size: 15);
+      color_profit = Colors.redAccent;
+      return  Icon(Icons.trending_down, size: 15, color:  color_profit,);
     }
-    return const Icon(Icons.trending_up, size: 15);
+    color_profit = Colors.greenAccent;
+    return Icon(Icons.trending_up, size: 15, color:  color_profit);
   }
 
   _comprobarTipo({required int tipo}) {

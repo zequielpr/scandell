@@ -62,8 +62,10 @@ class DB {
     await collectionReferenceProductos.doc(idCodigoBarra).set(datosProducto);
   }
 
-  static Future<void> setData() async {
-    await _db.collection('prueba').doc('1').set({'nombre': 'hola'});
+  static Future<void> update(
+      {required DocumentReference document,
+      required Map<String, dynamic> datos}) async {
+    await document.update(datos);
   }
 
   static redData() {
