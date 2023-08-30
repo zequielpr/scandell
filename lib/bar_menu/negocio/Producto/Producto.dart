@@ -39,11 +39,13 @@ class _ProductoState extends State<Producto> {
 
   _select_all_documets(){
     productoController.add_all_to_list_documents_para_eliminar();
+    //setState((){});
   }
 
   _desactivar_delete_mode(){
     productoController.limpiar_list_documents_para_eliminar();
     productoController.documentDeletMode = false;
+    //setState((){});
   }
 
   @override

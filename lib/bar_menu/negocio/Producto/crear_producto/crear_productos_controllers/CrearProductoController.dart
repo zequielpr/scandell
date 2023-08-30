@@ -27,8 +27,7 @@ class CrearProductoController {
 
   //Para ser utilizado en tests
 
-
-  crearProducto({required Map<String, dynamic> datosProducto}) {
+  crearProducto({required Map<String, dynamic> datosProducto}) async {
     _comprobarDatos(datosProducto: datosProducto);
 
     if (_campoEmty == 0 && _isNonum == 0) {
@@ -36,12 +35,13 @@ class CrearProductoController {
       datosProducto['precio_venta'] = precio_venta;
       datosProducto['stock'] = stock;
 
-      DB
-          .crearProducto(
-              collectionReferenceProductos: _colleccionReferenceProductos,
-              datosProducto: datosProducto,
-              idCodigoBarra: _idCodigoBarra)
-          .whenComplete(() => _context.router.navigateBack());
+      for (int i = 0; i < 500; i++) {
+        await DB.crearProducto(
+            collectionReferenceProductos: _colleccionReferenceProductos,
+            datosProducto: datosProducto,
+            idCodigoBarra: _idCodigoBarra);
+      }
+      _context.router.navigateBack();
     }
     print('Campo vacío: $_campoEmty \n como no numero: $_isNonum');
   }

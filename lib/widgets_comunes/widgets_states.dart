@@ -9,7 +9,7 @@ class WidgetsStates {
     states_list.add(stateSetter);
   }
 
-  set eliminarState(StateSetter stateSetter) {
+  void eliminarState(StateSetter stateSetter) {
     states_list.remove(stateSetter);
   }
 
