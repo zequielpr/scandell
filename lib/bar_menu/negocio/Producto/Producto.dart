@@ -19,8 +19,32 @@ class _ProductoState extends State<Producto> {
 
   late String nombreNegocio = NegocioController.getNombreNegocio(
       documentSnapshotNegocio: documentSnapshotNegocio);
-  late ProductoController productoController =
-      ProductoController(documentSnapshotNegocio: documentSnapshotNegocio);
+  late ProductoController productoController = ProductoController(
+      documentSnapshotNegocio: documentSnapshotNegocio,
+      documentDeletMode: false,
+      setState: setState,
+      context: context);
+
+  late List<Widget> traditionalAppBar = [
+    //IconButton(onPressed: () => productoController.navegarToCrearProducto(context: context), icon: const Icon(Icons.add_box_outlined)),
+    _getOpcionesCrearProducto(),
+    _getOpcionesAdminNegocio()
+  ];
+  late List<Widget> deletDocumentAppBar = [
+    IconButton(onPressed: () => _select_all_documets(), icon: Icon(Icons.circle_outlined), tooltip: 'Todos',),
+    IconButton(onPressed: () {}, icon: Icon(Icons.delete)),
+    IconButton(onPressed: () => _desactivar_delete_mode(), icon: Icon(Icons.close))
+  ];
+
+
+  _select_all_documets(){
+    productoController.add_all_to_list_documents_para_eliminar();
+  }
+
+  _desactivar_delete_mode(){
+    productoController.limpiar_list_documents_para_eliminar();
+    productoController.documentDeletMode = false;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,27 +52,36 @@ class _ProductoState extends State<Producto> {
         0; // Make sure this is outside build(), otherwise every setState will chage the value back to 0
 
     return Scaffold(
-      appBar: AppBar(
-        actions: [
-          //IconButton(onPressed: () => productoController.navegarToCrearProducto(context: context), icon: const Icon(Icons.add_box_outlined)),
-          _getOpcionesCrearProducto(),
-          _getOpcionesAdminNegocio()
-        ],
-        title: Text(nombreNegocio),
+      appBar: PreferredSize(
+        preferredSize:
+            Size.fromHeight(Pantalla.getPorcentPanntalla(7, context, 'y')),
+        child: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+          productoController.setState = setState;
+          return AppBar(
+            actions: productoController.documentDeletMode
+                ? deletDocumentAppBar
+                : traditionalAppBar,
+            title: Text(nombreNegocio),
+          );
+        }),
       ),
       body: Center(
         child: Container(
-          margin: EdgeInsets.all(Pantalla.getMarginLeftRight(context: context)),
+            margin:
+                EdgeInsets.all(Pantalla.getMarginLeftRight(context: context)),
             child: Center(
-          child: productoController.getListaProductos(context: context, mounted: mounted),
-        )),
+              child: productoController.getListaProductos(mounted: mounted),
+            )),
       ),
     );
   }
 
-
-  _getOpcionesCrearProducto(){
-    return IconButton(onPressed: ()=> productoController.scanearproducto(context: context, mounted: mounted), icon: Icon(Icons.add));
+  _getOpcionesCrearProducto() {
+    return IconButton(
+        onPressed: () => productoController.scanearproducto(
+            context: context, mounted: mounted),
+        icon: Icon(Icons.add));
 
     /*return  StatefulBuilder(
         builder: (BuildContext context, StateSetter setState) {
@@ -75,35 +108,39 @@ class _ProductoState extends State<Producto> {
         });*/
   }
 
-
-  _getOpcionesAdminNegocio(){
-    return  StatefulBuilder(
+  _getOpcionesAdminNegocio() {
+    return StatefulBuilder(
         builder: (BuildContext context, StateSetter setState) {
-          return PopupMenuButton<MenuOpcionesAdminNegocio>(
-              // Callback that sets the selected popup menu item.
-              onSelected: (MenuOpcionesAdminNegocio item) {
-                setState(() {
-                  _selectedMenu = item.name;
-                });
-              },
-              itemBuilder: (BuildContext context) => <PopupMenuEntry<MenuOpcionesAdminNegocio>>[
+      return PopupMenuButton<MenuOpcionesAdminNegocio>(
+          // Callback that sets the selected popup menu item.
+          onSelected: (MenuOpcionesAdminNegocio item) {
+            setState(() {
+              _selectedMenu = item.name;
+            });
+          },
+          itemBuilder: (BuildContext context) =>
+              <PopupMenuEntry<MenuOpcionesAdminNegocio>>[
                 PopupMenuItem<MenuOpcionesAdminNegocio>(
-                  value:MenuOpcionesAdminNegocio.CambiaNombre,
+                  value: MenuOpcionesAdminNegocio.CambiaNombre,
                   onTap: () async => {},
-                  child: Row(children: [Icon(Icons.edit),Text('Cambiar nombre')],),
+                  child: Row(
+                    children: [Icon(Icons.edit), Text('Cambiar nombre')],
+                  ),
                 ),
                 PopupMenuItem<MenuOpcionesAdminNegocio>(
-                  value:MenuOpcionesAdminNegocio.Eliminar,
-                  child: Row(children: [Icon(Icons.delete),Text('Eliminar')],),
+                  value: MenuOpcionesAdminNegocio.Eliminar,
+                  child: Row(
+                    children: [Icon(Icons.delete), Text('Eliminar')],
+                  ),
                   onTap: () async => {},
                 )
               ]);
-        });
+    });
   }
-
-
 }
+
 String _selectedMenu = '';
 
-enum MenuOpcionesCrearProducto { scanear, addManualmente}
+enum MenuOpcionesCrearProducto { scanear, addManualmente }
+
 enum MenuOpcionesAdminNegocio { CambiaNombre, Eliminar }

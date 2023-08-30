@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -7,15 +9,84 @@ import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 
 import '../../../../MediaQuery.dart';
 import '../../../../db/db.dart';
+import '../../../../widgets_comunes/widgets_states.dart';
 
 class ProductoController {
+  DocumentSnapshot _documentSnapshotNegocio;
+  bool _documentDeletMode;
+  BuildContext _context;
+  var _setState;
 
-  DocumentSnapshot documentSnapshotNegocio;
-  ProductoController({required this.documentSnapshotNegocio});
+  get setState => _setState;
+
+  set setState(value) {
+    _setState = value;
+  }
+
+  bool get documentDeletMode => _documentDeletMode;
+
+  set documentDeletMode(bool value) {
+    _documentDeletMode = value;
+    //_procesar_delete_mode(delet_mode_active: value);
+    _setState(() {});
+  }
+
+  var tileBackground = Colors.transparent;
+  var selectionIcon = const Icon(
+    Icons.circle_outlined,
+    color: Colors.transparent,
+  );
+
+  limpiar_list_documents_para_eliminar() {
+    _list_documents_para_eliminar.clear();
+    cardProductState.updateStates();
+  }
+
+  add_all_to_list_documents_para_eliminar() {
+    var documents_list =
+        _documentSnapshotNegocio.reference.collection('productos');
+    documents_list
+        .get()
+        .then((value) => {
+              value.docs.forEach((element) {
+                _list_documents_para_eliminar.add(element.reference);
+              })
+            })
+        .whenComplete(() {cardProductState.updateStates();
+    });
+  }
+
+  WidgetsStates cardProductState = WidgetsStates();
+
+  HashSet<DocumentReference> _list_documents_para_eliminar = HashSet();
+  //Comprobar si el producto se encuentra en la lista a eliminar
+  _comprobar_lista_eliminar({required DocumentReference documento}) {
+    //Si el modo de eliminar no está activado, el metodo finaliza su ejecución aquí.
+    if (!_documentDeletMode) return;
+
+    if (_list_documents_para_eliminar.contains(documento)) {
+      tileBackground = Colors.black12;
+      print('Holaaa');
+      return Icon(Icons.check_circle);
+    } else {
+      tileBackground = Colors.transparent;
+      return Icon(Icons.circle_outlined);
+    }
+  }
+
+  ProductoController(
+      {required DocumentSnapshot<Object?> documentSnapshotNegocio,
+      required documentDeletMode,
+      required setState,
+      required BuildContext context})
+      : _documentSnapshotNegocio = documentSnapshotNegocio,
+        _documentDeletMode = documentDeletMode,
+        _setState = setState,
+        _context = context;
 
   navegarToCrearProducto({required BuildContext context, String? idProducto}) {
     var _listaProducto =
-        documentSnapshotNegocio.reference.collection('productos');
+        _documentSnapshotNegocio.reference.collection('productos');
     context.router.push(CrearProductoRouter(
         collectionReferenceProductos: _listaProducto,
         idCodigoDeBarra: idProducto));
@@ -43,8 +114,38 @@ class ProductoController {
     if (!mounted) return;
   }
 
-  getListaProductos({required BuildContext context, required var mounted}) {
-    var _listaProducto = documentSnapshotNegocio.reference
+  //Activa el modo de eliminar.
+  //Añade el documento pulsado a la lista para eliminar
+  //Actualiza el widget pulsado
+  _pulsadoLargo({required DocumentReference documento, required setState}) {
+    documentDeletMode = true;
+    _add_doc_lista_elim(documento);
+    setState(() {});
+  }
+
+  _eliminar_de_lista_el(DocumentReference documentReference) {
+    _list_documents_para_eliminar.remove(documentReference);
+  }
+
+  _add_doc_lista_elim(DocumentReference documentReference) {
+    _list_documents_para_eliminar.add(documentReference);
+  }
+
+  _pulsado_corto({required DocumentReference documento, required setState}) {
+    if (_documentDeletMode) {
+      if (_list_documents_para_eliminar.contains(documento)) {
+        _eliminar_de_lista_el(documento);
+      } else {
+        _add_doc_lista_elim(documento);
+      }
+      setState(() {});
+    } else {
+      navegarToCrearProducto(context: _context, idProducto: documento.id);
+    }
+  }
+
+  getListaProductos({required var mounted}) {
+    var _listaProducto = _documentSnapshotNegocio.reference
         .collection('productos')
         .snapshots(includeMetadataChanges: true);
 
@@ -65,21 +166,39 @@ class ProductoController {
                   document.data()! as Map<String, dynamic>;
               return Column(
                 children: [
-                  ListTile(
-                    onTap: () => navegarToCrearProducto(context: context, idProducto: document.id),
-                    title: Text(
-                      data['nombre_producto'],
-                      style: TextStyle(fontSize: 25),
-                    ),
-                    subtitle: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _getPrecioVenta(data, context),
-                        _getProfit(data, context),
-                        _getStock(data, context)
-                      ],
-                    ),
-                  ),
+                  StatefulBuilder(
+                      builder: (BuildContext context, StateSetter setState) {
+                        cardProductState.addState(setState);
+                        if(!mounted)print('no montado');
+                    return ListTile(
+                      onLongPress: () => _pulsadoLargo(
+                          documento: document.reference, setState: setState),
+                      onTap: () => _pulsado_corto(
+                          documento: document.reference, setState: setState),
+                      title: Text(
+                        data['nombre_producto'],
+                        style: TextStyle(fontSize: 25),
+                      ),
+                      subtitle: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _getPrecioVenta(data, context),
+                          _getProfit(data, context),
+                          _getStock(data, context)
+                        ],
+                      ),
+                      trailing: _documentDeletMode
+                          ? _comprobar_lista_eliminar(
+                              documento: document.reference)
+                          : const Icon(
+                              Icons.add,
+                              size: 0,
+                            ),
+                      tileColor: _documentDeletMode
+                          ? tileBackground
+                          : Colors.transparent,
+                    );
+                  }),
                   const Divider(
                     thickness: 1,
                   )
@@ -100,7 +219,7 @@ class ProductoController {
                             MaterialStateProperty.all(Colors.transparent),
                         elevation: MaterialStateProperty.all(0)),
                     onPressed: () =>
-                        scanearproducto(context: context, mounted: mounted),
+                        scanearproducto(context: _context, mounted: mounted),
                     child: Icon(Icons.add,
                         color: Colors.black,
                         size: Pantalla.getPorcentPanntalla(
@@ -121,7 +240,9 @@ class ProductoController {
           Icons.shopping_basket_outlined,
           size: 15,
         ),
-        SizedBox(width: Pantalla.getPorcentPanntalla(1, context, 'x'),),
+        SizedBox(
+          width: Pantalla.getPorcentPanntalla(1, context, 'x'),
+        ),
         Text('${data['precio_venta']}  € x U    '),
       ],
     );
@@ -133,7 +254,9 @@ class ProductoController {
         _comprobarPrecioVenta(
             precioCompra: data['precio_compra'],
             precioVenta: data['precio_venta']),
-        SizedBox(width: Pantalla.getPorcentPanntalla(1, context, 'x'),),
+        SizedBox(
+          width: Pantalla.getPorcentPanntalla(1, context, 'x'),
+        ),
         Text('${data['precio_venta'] - data['precio_compra']}  € x U  ')
       ],
     );
@@ -146,23 +269,27 @@ class ProductoController {
           Icons.list,
           size: 15,
         ),
-        SizedBox(width: Pantalla.getPorcentPanntalla(1, context, 'x'),),
+        SizedBox(
+          width: Pantalla.getPorcentPanntalla(1, context, 'x'),
+        ),
         Text('${data['stock']}  U')
       ],
     );
   }
 
-
   var color_profit;
   _comprobarPrecioVenta(
       {required double precioCompra, required double precioVenta}) {
-
     if (precioCompra > precioVenta) {
       color_profit = Colors.redAccent;
-      return  Icon(Icons.trending_down, size: 15, color:  color_profit,);
+      return Icon(
+        Icons.trending_down,
+        size: 15,
+        color: color_profit,
+      );
     }
     color_profit = Colors.greenAccent;
-    return Icon(Icons.trending_up, size: 15, color:  color_profit);
+    return Icon(Icons.trending_up, size: 15, color: color_profit);
   }
 
   _comprobarTipo({required int tipo}) {

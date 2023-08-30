@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import '../../../../../db/db.dart';
 
 class CrearProductoController {
-  CollectionReference _colleccionReferenceProductos;
+  var _colleccionReferenceProductos;
   String? _idCodigoBarra;
-  BuildContext _context;
+  var _context;
   static int _campoEmty = 0;
   static int _isNonum = 0;
   var _setState;
@@ -24,6 +24,17 @@ class CrearProductoController {
         _idCodigoBarra = idCodigoBarra,
         _setState = setState,
         _context = context;
+
+  //Para ser utilizado en tests
+  CrearProductoController.tests()
+      : _colleccionReferenceProductos = FirebaseFirestore.instance
+            .collection('usuarios')
+            .doc('id')
+            .collection('negocios')
+            .doc('Djpz8JrEcOzNiZ0toVGB')
+            .collection('productos'),
+        _setState = '',
+        _context = '';
 
   crearProducto({required Map<String, dynamic> datosProducto}) {
     _comprobarDatos(datosProducto: datosProducto);

@@ -67,6 +67,10 @@ class _CrearProductoState extends State<CrearProducto> {
   initState(){
     _datos_to_textControllers();
   }
+
+
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

@@ -1,14 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../MediaQuery.dart';
 import '../widgets_comunes/ShowModal.dart';
 
 class DB {
-  static final FirebaseFirestore _db = FirebaseFirestore.instance;
+  static final FirebaseFirestore db = FakeFirebaseFirestore();
 
   static Future<void> setDatosDocUsuarios({required String idUsuario}) async {
-    await _db
+    await db
         .collection('usuarios')
         .doc(idUsuario)
         .set({'full_name': 'zequiel perez', 'email': 'ejemplo@gmail.com'});
@@ -19,7 +20,7 @@ class DB {
     required String idUsuario,
     required String direccion,
   }) async {
-    await _db
+    await db
         .collection('usuarios')
         .doc(idUsuario)
         .collection('negocios')
@@ -37,7 +38,7 @@ class DB {
       {required String img_url,
       required String idNegocio,
       required String idUsuario}) async {
-    await _db
+    await db
         .collection('usuarios')
         .doc(idUsuario)
         .collection('negocios')
@@ -47,7 +48,7 @@ class DB {
 
   static Stream<QuerySnapshot<Map<String, dynamic>>> listarNegocios(
       {required String idUsuario}) {
-    var _listaNegocio = _db
+    var _listaNegocio = db
         .collection('usuarios')
         .doc(idUsuario)
         .collection('negocios')
@@ -70,7 +71,7 @@ class DB {
 
   static redData() {
     return FutureBuilder<DocumentSnapshot>(
-      future: _db.collection('prueba').doc('1').get(),
+      future: db.collection('prueba').doc('1').get(),
       builder:
           (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
         if (snapshot.hasError) {
