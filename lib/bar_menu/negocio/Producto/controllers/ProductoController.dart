@@ -169,7 +169,6 @@ class ProductoController {
                   StatefulBuilder(
                       builder: (BuildContext context, StateSetter setState) {
                         cardProductState.addState(setState);
-                        if(!mounted)print('no montado');
                     return ListTile(
                       onLongPress: () => _pulsadoLargo(
                           documento: document.reference, setState: setState),
