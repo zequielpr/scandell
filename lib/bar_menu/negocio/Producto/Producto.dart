@@ -1,7 +1,12 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:percent_indicator/circular_percent_indicator.dart';
+import 'package:percent_indicator/linear_percent_indicator.dart';
 import 'package:scasell/MediaQuery.dart';
 
+import '../../../Estilo/Colores.dart';
+import '../../../widgets_comunes/my_Dialogues.dart';
 import '../controllers/negocioController.dart';
 import 'controllers/ProductoController.dart';
 
@@ -51,11 +56,67 @@ class _ProductoState extends State<Producto> {
     //setState((){});
   }
 
-
-  _delete_selected_document(){
-    productoController.delete_document_in_list();
+  String _titulo = '';
+  var _mensaje = 'Eliminar documentos';
+  _dialogue_actions(BuildContext context) {
+    return <Widget>[
+      TextButton(
+          onPressed: () {
+            context.router.pop();
+          },
+          child: Text('Cancel')),
+      TextButton(
+          onPressed: () async {
+            await context.router.pop();
+            _crear_elimination_advance_bar(context);
+            dialogue_eliminar_products.mostrarDialog();
+          },
+          child: Text('Eliminar'))
+    ];
   }
 
+  _dialogue_action_cancelar(BuildContext context) {
+    return <Widget>[
+      TextButton(onPressed: () {}, child: Text('Cancel')),
+    ];
+  }
+
+  late Dialogues dialogue_eliminar_products;
+  late Widget bar_inidcator;
+
+  _crear_elimination_advance_bar(BuildContext context) {
+    bar_inidcator = Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        LinearPercentIndicator(
+          width: Pantalla.getPorcentPanntalla(70, context, 'x'),
+          lineHeight: 3,
+          percent: 0.7,
+          backgroundColor: Colors.grey,
+          progressColor: Colores.colorPrincipal,
+        )
+      ],
+    );
+
+    dialogue_eliminar_products = Dialogues(
+        titulo: _titulo,
+        mensaje: bar_inidcator,
+        actions: _dialogue_action_cancelar,
+        context: context);
+  }
+
+  _delete_selected_document() {
+    dialogue_eliminar_products = Dialogues(
+        titulo: _titulo,
+        mensaje: _mensaje,
+        actions: _dialogue_actions,
+        context: context);
+    dialogue_eliminar_products.mostrarDialog();
+
+    //productoController.delete_document_in_list();
+  }
+
+  //Bar to indicate the elimination advance
 
   _get_delet_mode_app_bar() {
     return [
@@ -68,7 +129,9 @@ class _ProductoState extends State<Producto> {
             : _no_all_selected,
         tooltip: 'Todos',
       ),
-      IconButton(onPressed: () => _delete_selected_document(), icon: Icon(Icons.delete)),
+      IconButton(
+          onPressed: () => _delete_selected_document(),
+          icon: Icon(Icons.delete)),
       IconButton(
           onPressed: () => _desactivar_delete_mode(), icon: Icon(Icons.close))
     ];
