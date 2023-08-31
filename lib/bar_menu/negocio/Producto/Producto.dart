@@ -23,29 +23,55 @@ class _ProductoState extends State<Producto> {
       documentSnapshotNegocio: documentSnapshotNegocio,
       documentDeletMode: false,
       setState: setState,
-      context: context);
+      context: context,
+      is_all_selected: false);
 
   late List<Widget> traditionalAppBar = [
     //IconButton(onPressed: () => productoController.navegarToCrearProducto(context: context), icon: const Icon(Icons.add_box_outlined)),
     _getOpcionesCrearProducto(),
     _getOpcionesAdminNegocio()
   ];
-  late List<Widget> deletDocumentAppBar = [
-    IconButton(onPressed: () => _select_all_documets(), icon: Icon(Icons.circle_outlined), tooltip: 'Todos',),
-    IconButton(onPressed: () {}, icon: Icon(Icons.delete)),
-    IconButton(onPressed: () => _desactivar_delete_mode(), icon: Icon(Icons.close))
-  ];
 
+  final Icon _all_selected = const Icon(Icons.check_circle);
+  final Icon _no_all_selected = const Icon(Icons.circle_outlined);
 
-  _select_all_documets(){
+  _select_all_documets() {
     productoController.add_all_to_list_documents_para_eliminar();
+    print('All selected?: ${productoController.is_all_selected}');
     //setState((){});
   }
 
-  _desactivar_delete_mode(){
+  _unselect_documents() {
+    productoController.limpiar_list_documents_para_eliminar();
+  }
+
+  _desactivar_delete_mode() {
     productoController.limpiar_list_documents_para_eliminar();
     productoController.documentDeletMode = false;
     //setState((){});
+  }
+
+
+  _delete_selected_document(){
+    productoController.delete_document_in_list();
+  }
+
+
+  _get_delet_mode_app_bar() {
+    return [
+      IconButton(
+        onPressed: () => productoController.is_all_selected
+            ? _unselect_documents()
+            : _select_all_documets(),
+        icon: productoController.is_all_selected == true
+            ? _all_selected
+            : _no_all_selected,
+        tooltip: 'Todos',
+      ),
+      IconButton(onPressed: () => _delete_selected_document(), icon: Icon(Icons.delete)),
+      IconButton(
+          onPressed: () => _desactivar_delete_mode(), icon: Icon(Icons.close))
+    ];
   }
 
   @override
@@ -62,7 +88,7 @@ class _ProductoState extends State<Producto> {
           productoController.setState = setState;
           return AppBar(
             actions: productoController.documentDeletMode
-                ? deletDocumentAppBar
+                ? _get_delet_mode_app_bar()
                 : traditionalAppBar,
             title: Text(nombreNegocio),
           );
@@ -73,7 +99,7 @@ class _ProductoState extends State<Producto> {
             margin:
                 EdgeInsets.all(Pantalla.getMarginLeftRight(context: context)),
             child: Center(
-              child: productoController.getListaProductos(mounted: mounted),
+              child: productoController.getProductos(mounted: mounted),
             )),
       ),
     );

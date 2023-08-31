@@ -15,6 +15,7 @@ import '../../../../widgets_comunes/widgets_states.dart';
 class ProductoController {
   DocumentSnapshot _documentSnapshotNegocio;
   bool _documentDeletMode;
+  bool _is_all_selected;
   BuildContext _context;
   var _setState;
   var tileBackground = Colors.transparent;
@@ -23,14 +24,19 @@ class ProductoController {
     Icons.circle_outlined,
     size: 0,
   );
-  WidgetsStates cardProductStates = WidgetsStates();
-
+  late WidgetsStates _cardProductStates;
   HashSet<DocumentReference> _list_documents_para_eliminar = HashSet();
 
   get setState => _setState;
 
   set setState(value) {
     _setState = value;
+  }
+
+  bool get is_all_selected => _is_all_selected;
+
+  set is_all_selected(bool value) {
+    _is_all_selected = value;
   }
 
   bool get documentDeletMode => _documentDeletMode;
@@ -43,7 +49,9 @@ class ProductoController {
 
   limpiar_list_documents_para_eliminar() {
     _list_documents_para_eliminar.clear();
-    cardProductStates.updateStates();
+    _setState(() {}); //update appBar of delete mode
+    _is_all_selected = false;
+    _cardProductStates.updateStates();
   }
 
   add_all_to_list_documents_para_eliminar() {
@@ -56,7 +64,24 @@ class ProductoController {
                 _list_documents_para_eliminar.add(element.reference);
               })
             })
-        .whenComplete(() => cardProductStates.updateStates());
+        .whenComplete(() => {
+              _is_all_selected = true,
+              _cardProductStates.updateStates(),
+              _setState(() {})
+            });
+  }
+
+  void delete_document_in_list() async {
+    int doc_in_list = _list_documents_para_eliminar.length;
+    for (var doc in _list_documents_para_eliminar) {
+      await _documentSnapshotNegocio.reference
+          .collection('productos')
+          .doc(doc.id)
+          .delete()
+          .whenComplete(() => doc_in_list--);
+
+      print('$doc_in_list left');
+    }
   }
 
   //Comprobar si el producto se encuentra en la lista a eliminar
@@ -68,7 +93,6 @@ class ProductoController {
       tileBackground = Colors.black12;
       return Icon(Icons.check_circle);
     } else {
-      print('holaaaa');
       tileBackground = Colors.transparent;
       return Icon(Icons.circle_outlined);
     }
@@ -78,107 +102,13 @@ class ProductoController {
       {required DocumentSnapshot<Object?> documentSnapshotNegocio,
       required documentDeletMode,
       required setState,
-      required BuildContext context})
+      required BuildContext context,
+      required bool is_all_selected})
       : _documentSnapshotNegocio = documentSnapshotNegocio,
         _documentDeletMode = documentDeletMode,
         _setState = setState,
-        _context = context;
-
-  getListaProductos({required var mounted}) {
-    var _listaProducto = _documentSnapshotNegocio.reference
-        .collection('productos')
-        .snapshots(includeMetadataChanges: true);
-
-    return StreamBuilder<QuerySnapshot>(
-      stream: _listaProducto,
-      builder: (BuildContext ctx, AsyncSnapshot<QuerySnapshot> snapshot) {
-        if (snapshot.hasError) {
-          return Text('Something went wrong');
-        }
-
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Text("Loading");
-        }
-        if (snapshot!.data?.size != 0) {
-          return MyStatefulBuilder(
-            dispose: () {
-              WidgetsStates.states_list.clear();
-            },
-            builder: (BuildContext context, StateSetter setState) {
-              cardProductStates.addState(setState);
-              return ListView(
-                children: snapshot.data!.docs.map((DocumentSnapshot document) {
-                  if (documentDeletMode) {
-                    selectionIcon = _comprobar_lista_eliminar(
-                        documento: document.reference);
-                  }
-
-                  Map<String, dynamic> data =
-                      document.data()! as Map<String, dynamic>;
-                  return Column(
-                    children: [
-                      ListTile(
-                        onLongPress: () => _pulsadoLargo(
-                            documento: document.reference, setState: setState),
-                        onTap: () => _pulsado_corto(
-                            documento: document.reference, setState: setState),
-                        title: Text(
-                          data['nombre_producto'],
-                          style: TextStyle(fontSize: 25),
-                        ),
-                        subtitle: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            _getPrecioVenta(data, _context),
-                            _getProfit(data, _context),
-                            _getStock(data, _context)
-                          ],
-                        ),
-                        trailing: _documentDeletMode
-                            ? selectionIcon
-                            : transparentIcon,
-                        tileColor: _documentDeletMode
-                            ? tileBackground
-                            : Colors.transparent,
-                      ),
-                      const Divider(
-                        thickness: 1,
-                      )
-                    ],
-                  );
-                }).toList(),
-              );
-              ;
-            },
-            key: null,
-          );
-        }
-
-        //If there is not any product, this container is return
-        return Container(
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                    style: ButtonStyle(
-                        backgroundColor:
-                            MaterialStateProperty.all(Colors.transparent),
-                        elevation: MaterialStateProperty.all(0)),
-                    onPressed: () =>
-                        scanearproducto(context: _context, mounted: mounted),
-                    child: Icon(Icons.add,
-                        color: Colors.black,
-                        size: Pantalla.getPorcentPanntalla(
-                            20.0 as double, ctx, 'x'))),
-                Text('Crear producto')
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
+        _context = context,
+        _is_all_selected = is_all_selected;
 
   navegarToCrearProducto({required BuildContext context, String? idProducto}) {
     var _listaProducto =
@@ -227,14 +157,31 @@ class ProductoController {
     _list_documents_para_eliminar.add(documentReference);
   }
 
-  _pulsado_corto({required DocumentReference documento, required setState}) {
+  _pulsado_corto(
+      {required DocumentReference documento,
+      required setState,
+      required int num_elements}) {
     if (_documentDeletMode) {
       if (_list_documents_para_eliminar.contains(documento)) {
         _eliminar_de_lista_el(documento);
       } else {
         _add_doc_lista_elim(documento);
       }
-      setState(() {});
+
+      if (num_elements == _list_documents_para_eliminar.length) {
+        print('Cuantity of elements: $num_elements');
+        print(
+            'Cuantity of elements in the list to be deleted: ${_list_documents_para_eliminar.length}');
+        _is_all_selected = true;
+      } else {
+        print('Cuantity of elements: $num_elements');
+        print(
+            'Cuantity of elements in the list to be deleted: ${_list_documents_para_eliminar.length}');
+        _is_all_selected = false;
+      }
+
+      setState(() {}); //State where the list of products is
+      _setState(() {}); // State of the appBar
     } else {
       navegarToCrearProducto(context: _context, idProducto: documento.id);
     }
@@ -297,6 +244,104 @@ class ProductoController {
     }
     color_profit = Colors.greenAccent;
     return Icon(Icons.trending_up, size: 15, color: color_profit);
+  }
+
+  getProductos({required var mounted}) {
+    var _listaProducto = _documentSnapshotNegocio.reference
+        .collection('productos')
+        .snapshots(includeMetadataChanges: true);
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: _listaProducto,
+      builder: (BuildContext ctx, AsyncSnapshot<QuerySnapshot> snapshot) {
+        if (snapshot.hasError) {
+          return Text('Something went wrong');
+        }
+
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Text("Loading");
+        }
+        if (snapshot!.data?.size != 0) {
+          return MyStatefulBuilder(
+            dispose: () {
+              //WidgetsStates.states_list.clear();
+            },
+            builder: (BuildContext context, StateSetter setState) {
+              _cardProductStates = WidgetsStates(state: setState);
+              return ListView(
+                children: snapshot.data!.docs.map((DocumentSnapshot document) {
+                  if (documentDeletMode) {
+                    selectionIcon = _comprobar_lista_eliminar(
+                        documento: document.reference);
+                  }
+
+                  Map<String, dynamic> data =
+                      document.data()! as Map<String, dynamic>;
+                  return Column(
+                    children: [
+                      ListTile(
+                        onLongPress: () => _pulsadoLargo(
+                            documento: document.reference, setState: setState),
+                        onTap: () => _pulsado_corto(
+                            documento: document.reference,
+                            setState: setState,
+                            num_elements: snapshot!.data!.size),
+                        title: Text(
+                          data['nombre_producto'],
+                          style: TextStyle(fontSize: 25),
+                        ),
+                        subtitle: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _getPrecioVenta(data, _context),
+                            _getProfit(data, _context),
+                            _getStock(data, _context)
+                          ],
+                        ),
+                        trailing: _documentDeletMode
+                            ? selectionIcon
+                            : transparentIcon,
+                        tileColor: _documentDeletMode
+                            ? tileBackground
+                            : Colors.transparent,
+                      ),
+                      const Divider(
+                        thickness: 1,
+                      )
+                    ],
+                  );
+                }).toList(),
+              );
+              ;
+            },
+            key: null,
+          );
+        }
+
+        //If there is not any product, this container is return
+        return Container(
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                    style: ButtonStyle(
+                        backgroundColor:
+                            MaterialStateProperty.all(Colors.transparent),
+                        elevation: MaterialStateProperty.all(0)),
+                    onPressed: () =>
+                        scanearproducto(context: _context, mounted: mounted),
+                    child: Icon(Icons.add,
+                        color: Colors.black,
+                        size: Pantalla.getPorcentPanntalla(
+                            20.0 as double, ctx, 'x'))),
+                Text('Crear producto')
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   /*_comprobarTipo({required int tipo}) {
