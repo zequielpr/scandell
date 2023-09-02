@@ -71,17 +71,21 @@ class ProductoController {
             });
   }
 
-  void delete_document_in_list() async {
-    int doc_in_list = _list_documents_para_eliminar.length;
-    for (var doc in _list_documents_para_eliminar) {
-      await _documentSnapshotNegocio.reference
-          .collection('productos')
-          .doc(doc.id)
-          .delete()
-          .whenComplete(() => doc_in_list--);
+  List<QueryDocumentSnapshot> snap_recieved = [];
+  Future<void> delete_document_in_list() async {
+    //int doc_in_list = _list_documents_para_eliminar.length;
 
-      print('$doc_in_list left');
+    var collection = _documentSnapshotNegocio.reference.collection('productos');
+
+   for (var document in _list_documents_para_eliminar) {
+       await document.delete();
+
     }
+    _cardProductStates.updateStates();
+    snap_recieved.clear();
+
+    //_is_all_selected = false;
+    //_setState((){});
   }
 
   //Comprobar si el producto se encuentra en la lista a eliminar
@@ -248,10 +252,109 @@ class ProductoController {
 
   getProductos({required var mounted}) {
     var _listaProducto = _documentSnapshotNegocio.reference
-        .collection('productos')
-        .snapshots(includeMetadataChanges: true);
+        .collection('productos').get();
 
-    return StreamBuilder<QuerySnapshot>(
+   return FutureBuilder<QuerySnapshot>(
+      future: _listaProducto,
+      builder:
+          (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+
+
+        if (snapshot.hasError) {
+          return Text("Something went wrong");
+        }
+
+
+        if (snapshot.data!.docs.length == 0) {
+          return Container(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                      style: ButtonStyle(
+                          backgroundColor:
+                          MaterialStateProperty.all(Colors.transparent),
+                          elevation: MaterialStateProperty.all(0)),
+                      onPressed: () =>
+                          scanearproducto(context: _context, mounted: mounted),
+                      child: Icon(Icons.add,
+                          color: Colors.black,
+                          size: Pantalla.getPorcentPanntalla(
+                              20.0 as double, _context, 'x'))),
+                  Text('Crear producto')
+                ],
+              ),
+            ),
+          );
+        }
+
+        print('object');
+        if (snapshot.connectionState == ConnectionState.done) {
+          print('object');
+          snap_recieved = snapshot.data!.docs;
+          return MyStatefulBuilder(
+            dispose: () {
+              //WidgetsStates.states_list.clear();
+            },
+            builder: (BuildContext context, StateSetter setState) {
+              _cardProductStates = WidgetsStates(state: setState);
+              return ListView(
+                children: snap_recieved.map((DocumentSnapshot document) {
+                  Map<String, dynamic> data =
+                  document.data()! as Map<String, dynamic>;
+                  if (documentDeletMode) {
+                    selectionIcon = _comprobar_lista_eliminar(
+                        documento: document.reference);
+                  }
+                  return Column(
+                    children: [
+                      ListTile(
+                        onLongPress: () => _pulsadoLargo(
+                            documento: document.reference, setState: setState),
+                        onTap: () => _pulsado_corto(
+                            documento: document.reference,
+                            setState: setState,
+                            num_elements: snapshot!.data!.size),
+                        title: Text(
+                          data['nombre_producto'],
+                          style: TextStyle(fontSize: 25),
+                        ),
+                        subtitle: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _getPrecioVenta(data, _context),
+                            _getProfit(data, _context),
+                            _getStock(data, _context)
+                          ],
+                        ),
+                        trailing: _documentDeletMode
+                            ? selectionIcon
+                            : transparentIcon,
+                        tileColor: _documentDeletMode
+                            ? tileBackground
+                            : Colors.transparent,
+                      ),
+                      const Divider(
+                        thickness: 1,
+                      )
+                    ],
+                  );
+                }).toList(),
+              );
+              ;
+            },
+            key: null,
+          );
+        }
+
+        return Text("loading");
+      },
+    );
+
+
+
+   /*return StreamBuilder<QuerySnapshot>(
       stream: _listaProducto,
       builder: (BuildContext ctx, AsyncSnapshot<QuerySnapshot> snapshot) {
         if (snapshot.hasError) {
@@ -341,7 +444,7 @@ class ProductoController {
           ),
         );
       },
-    );
+    );*/
   }
 
   /*_comprobarTipo({required int tipo}) {

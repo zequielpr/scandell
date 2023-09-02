@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -69,6 +71,13 @@ class DB {
     await document.update(datos);
   }
 
+  static Future<void> delete(
+      {
+      required DocumentReference document}) async {
+    await document.delete();
+  }
+
+  //Solo prueba
   static redData() {
     return FutureBuilder<DocumentSnapshot>(
       future: db.collection('prueba').doc('1').get(),

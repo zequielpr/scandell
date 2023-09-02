@@ -56,6 +56,11 @@ class _ProductoState extends State<Producto> {
     //setState((){});
   }
 
+_eliminar_all_doc(){
+
+    productoController.delete_document_in_list();
+  }
+
   String _titulo = '';
   var _mensaje = 'Eliminar documentos';
   _dialogue_actions(BuildContext context) {
@@ -66,15 +71,12 @@ class _ProductoState extends State<Producto> {
           },
           child: Text('Cancel')),
       TextButton(
-          onPressed: () async {
-            await context.router.pop();
-            _crear_elimination_advance_bar(context);
-            dialogue_eliminar_products.mostrarDialog();
-          },
+          onPressed: () =>  _eliminar_all_doc(),
           child: Text('Eliminar'))
     ];
   }
 
+  //Cancela el avance de eliminación
   _dialogue_action_cancelar(BuildContext context) {
     return <Widget>[
       TextButton(onPressed: () {}, child: Text('Cancel')),
@@ -91,7 +93,7 @@ class _ProductoState extends State<Producto> {
         LinearPercentIndicator(
           width: Pantalla.getPorcentPanntalla(70, context, 'x'),
           lineHeight: 3,
-          percent: 0.7,
+          percent: 0.1,
           backgroundColor: Colors.grey,
           progressColor: Colores.colorPrincipal,
         )
@@ -105,15 +107,14 @@ class _ProductoState extends State<Producto> {
         context: context);
   }
 
-  _delete_selected_document() {
+  _mostrar_opcion_eliminar_all_docs() {
     dialogue_eliminar_products = Dialogues(
         titulo: _titulo,
         mensaje: _mensaje,
         actions: _dialogue_actions,
         context: context);
-    dialogue_eliminar_products.mostrarDialog();
 
-    //productoController.delete_document_in_list();
+    dialogue_eliminar_products.mostrarDialog();
   }
 
   //Bar to indicate the elimination advance
@@ -130,7 +131,7 @@ class _ProductoState extends State<Producto> {
         tooltip: 'Todos',
       ),
       IconButton(
-          onPressed: () => _delete_selected_document(),
+          onPressed: () => _mostrar_opcion_eliminar_all_docs(),
           icon: Icon(Icons.delete)),
       IconButton(
           onPressed: () => _desactivar_delete_mode(), icon: Icon(Icons.close))

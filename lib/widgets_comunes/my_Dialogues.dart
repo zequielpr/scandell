@@ -25,8 +25,8 @@ class Dialogues {
         _actions = actions,
         _context = context;
 
-  mostrarDialog() {
-    showDialog<String>(
+  Future<void>mostrarDialog() async {
+    await showDialog<String>(
       context: _context,
       builder: (BuildContext context_d_bld) => StatefulBuilder(
           builder: (BuildContext context, StateSetter stateSetter) {
