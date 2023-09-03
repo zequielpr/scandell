@@ -25,7 +25,8 @@ class ProductoController {
     size: 0,
   );
   late WidgetsStates _cardProductStates;
-  HashSet<DocumentReference> _list_documents_para_eliminar = HashSet();
+  HashSet<DocumentSnapshot> _list_documents_para_eliminar = HashSet();
+  HashSet<DocumentSnapshot> _list_eliminated_documents = HashSet();
 
   get setState => _setState;
 
@@ -55,41 +56,49 @@ class ProductoController {
   }
 
   add_all_to_list_documents_para_eliminar() {
-    var documents_list =
-        _documentSnapshotNegocio.reference.collection('productos');
-    documents_list
-        .get()
-        .then((value) => {
-              value.docs.forEach((element) {
-                _list_documents_para_eliminar.add(element.reference);
-              })
-            })
-        .whenComplete(() => {
-              _is_all_selected = true,
-              _cardProductStates.updateStates(),
-              _setState(() {})
-            });
+    //Añade todos los documento a la lista de eliminar
+    _list_documents_para_eliminar.addAll(_snap_recieved);
+
+    _is_all_selected = true;
+    _cardProductStates.updateStates();
+    _setState(() {});
   }
 
-  List<QueryDocumentSnapshot> snap_recieved = [];
+  HashSet<DocumentSnapshot> _snap_recieved = HashSet();
   Future<void> delete_document_in_list() async {
-    //int doc_in_list = _list_documents_para_eliminar.length;
+    int count = 0;
+    for (var document in _list_documents_para_eliminar) {
+      await document.reference.delete().whenComplete(() {
+        _snap_recieved.remove(document);
+        _list_eliminated_documents.add(document);
+      });
 
-    var collection = _documentSnapshotNegocio.reference.collection('productos');
-
-   for (var document in _list_documents_para_eliminar) {
-       await document.delete();
-
+      _cardProductStates.updateStates();
     }
-    _cardProductStates.updateStates();
-    snap_recieved.clear();
+    if (_is_all_selected){
+      _documentDeletMode = false;
+      _list_documents_para_eliminar.clear();
+    }
 
-    //_is_all_selected = false;
-    //_setState((){});
+    _is_all_selected = false;
+    _setState(() {});
+  }
+
+  //Recuperar los documentos eliminados recientemente
+  Future<void>undo() async {
+    print('documentos para recup: ${_list_eliminated_documents.length}');
+    Map<String, dynamic> data;
+    for (var eliminated_document in _list_eliminated_documents) {
+      data = eliminated_document.data()! as Map<String, dynamic>;
+      await _documentSnapshotNegocio.reference.collection('productos').doc(eliminated_document.id).set(data);
+    }
+    _snap_recieved = _snap_recieved.union(_list_eliminated_documents) as HashSet<DocumentSnapshot<Object?>>;
+    _list_eliminated_documents.clear();
+    _cardProductStates.updateStates();
   }
 
   //Comprobar si el producto se encuentra en la lista a eliminar
-  _comprobar_lista_eliminar({required DocumentReference documento}) {
+  _comprobar_lista_eliminar({required DocumentSnapshot documento}) {
     //Si el modo de eliminar no está activado, el metodo finaliza su ejecución aquí.
     if (!_documentDeletMode)
       return;
@@ -147,22 +156,22 @@ class ProductoController {
   //Activa el modo de eliminar.
   //Añade el documento pulsado a la lista para eliminar
   //Actualiza el widget pulsado
-  _pulsadoLargo({required DocumentReference documento, required setState}) {
+  _pulsadoLargo({required DocumentSnapshot documento, required setState}) {
     documentDeletMode = true;
     _add_doc_lista_elim(documento);
     setState(() {});
   }
 
-  _eliminar_de_lista_el(DocumentReference documentReference) {
+  _eliminar_de_lista_el(DocumentSnapshot documentReference) {
     _list_documents_para_eliminar.remove(documentReference);
   }
 
-  _add_doc_lista_elim(DocumentReference documentReference) {
+  _add_doc_lista_elim(DocumentSnapshot documentReference) {
     _list_documents_para_eliminar.add(documentReference);
   }
 
   _pulsado_corto(
-      {required DocumentReference documento,
+      {required DocumentSnapshot documento,
       required setState,
       required int num_elements}) {
     if (_documentDeletMode) {
@@ -173,14 +182,8 @@ class ProductoController {
       }
 
       if (num_elements == _list_documents_para_eliminar.length) {
-        print('Cuantity of elements: $num_elements');
-        print(
-            'Cuantity of elements in the list to be deleted: ${_list_documents_para_eliminar.length}');
         _is_all_selected = true;
       } else {
-        print('Cuantity of elements: $num_elements');
-        print(
-            'Cuantity of elements in the list to be deleted: ${_list_documents_para_eliminar.length}');
         _is_all_selected = false;
       }
 
@@ -251,21 +254,17 @@ class ProductoController {
   }
 
   getProductos({required var mounted}) {
-    var _listaProducto = _documentSnapshotNegocio.reference
-        .collection('productos').get();
+    var _listaProducto =
+        _documentSnapshotNegocio.reference.collection('productos').get();
 
-   return FutureBuilder<QuerySnapshot>(
+    return FutureBuilder<QuerySnapshot>(
       future: _listaProducto,
-      builder:
-          (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-
-
+      builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
         if (snapshot.hasError) {
           return Text("Something went wrong");
         }
 
-
-        if (snapshot.data!.docs.length == 0) {
+        if (snapshot.data?.docs.isEmpty == true) {
           return Container(
             child: Center(
               child: Column(
@@ -292,7 +291,7 @@ class ProductoController {
         print('object');
         if (snapshot.connectionState == ConnectionState.done) {
           print('object');
-          snap_recieved = snapshot.data!.docs;
+          _snap_recieved.addAll(snapshot.data!.docs);
           return MyStatefulBuilder(
             dispose: () {
               //WidgetsStates.states_list.clear();
@@ -300,20 +299,20 @@ class ProductoController {
             builder: (BuildContext context, StateSetter setState) {
               _cardProductStates = WidgetsStates(state: setState);
               return ListView(
-                children: snap_recieved.map((DocumentSnapshot document) {
+                children: _snap_recieved.map((DocumentSnapshot document) {
                   Map<String, dynamic> data =
-                  document.data()! as Map<String, dynamic>;
+                      document.data()! as Map<String, dynamic>;
                   if (documentDeletMode) {
-                    selectionIcon = _comprobar_lista_eliminar(
-                        documento: document.reference);
+                    selectionIcon =
+                        _comprobar_lista_eliminar(documento: document);
                   }
                   return Column(
                     children: [
                       ListTile(
                         onLongPress: () => _pulsadoLargo(
-                            documento: document.reference, setState: setState),
+                            documento: document, setState: setState),
                         onTap: () => _pulsado_corto(
-                            documento: document.reference,
+                            documento: document,
                             setState: setState,
                             num_elements: snapshot!.data!.size),
                         title: Text(
@@ -352,9 +351,7 @@ class ProductoController {
       },
     );
 
-
-
-   /*return StreamBuilder<QuerySnapshot>(
+    /*return StreamBuilder<QuerySnapshot>(
       stream: _listaProducto,
       builder: (BuildContext ctx, AsyncSnapshot<QuerySnapshot> snapshot) {
         if (snapshot.hasError) {

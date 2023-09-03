@@ -56,9 +56,22 @@ class _ProductoState extends State<Producto> {
     //setState((){});
   }
 
-_eliminar_all_doc(){
+_eliminar_all_doc(BuildContext dilague_context) async {
 
-    productoController.delete_document_in_list();
+     await productoController.delete_document_in_list().whenComplete(() async {
+       await dilague_context.router.pop();
+       final snackBar = SnackBar(
+         content: const Text('Yay! A SnackBar!'),
+         action: SnackBarAction(
+           label: 'Undo',
+           onPressed: () => productoController.undo(),
+         ),
+       );
+
+       // Find the ScaffoldMessenger in the widget tree
+       // and use it to show a SnackBar.
+       ScaffoldMessenger.of(context).showSnackBar(snackBar);
+     });
   }
 
   String _titulo = '';
@@ -71,7 +84,7 @@ _eliminar_all_doc(){
           },
           child: Text('Cancel')),
       TextButton(
-          onPressed: () =>  _eliminar_all_doc(),
+          onPressed: () =>  _eliminar_all_doc(context),
           child: Text('Eliminar'))
     ];
   }

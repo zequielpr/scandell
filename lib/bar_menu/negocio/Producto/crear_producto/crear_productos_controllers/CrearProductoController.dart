@@ -35,7 +35,7 @@ class CrearProductoController {
       datosProducto['precio_venta'] = precio_venta;
       datosProducto['stock'] = stock;
 
-      for (int i = 0; i < 500; i++) {
+      for (int i = 0; i < 5; i++) {
         await DB.crearProducto(
             collectionReferenceProductos: _colleccionReferenceProductos,
             datosProducto: datosProducto,
