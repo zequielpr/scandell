@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:scasell/rutas/Rutas.gr.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 
+import '../../../../Estilo/Colores.dart';
 import '../../../../MediaQuery.dart';
 import '../../../../db/db.dart';
 import '../../../../widgets_comunes/statefulBuilder.dart';
@@ -119,7 +120,7 @@ class ProductoController {
     if (!_documentDeletMode)
       return;
     else if (_list_documents_para_eliminar.contains(documento)) {
-      tileBackground = Colors.black12;
+      tileBackground = Colores.color_selection;
       return Icon(Icons.check_circle);
     } else {
       tileBackground = Colors.transparent;
@@ -340,6 +341,7 @@ class ProductoController {
                         title: Text(
                           data['nombre_producto'],
                           style: TextStyle(fontSize: 25),
+                          overflow: TextOverflow.ellipsis,
                         ),
                         subtitle: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -349,6 +351,7 @@ class ProductoController {
                             _getStock(data, _context)
                           ],
                         ),
+                        dense: true,
                         trailing: _documentDeletMode
                             ? selectionIcon
                             : transparentIcon,
