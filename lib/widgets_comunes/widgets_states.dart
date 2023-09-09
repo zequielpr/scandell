@@ -3,25 +3,16 @@ import 'dart:collection';
 import 'package:flutter/material.dart';
 
 class WidgetsStates {
-  static HashSet<StateSetter> states_list = HashSet();
+  StateSetter _states;
 
-  void addState(StateSetter stateSetter) {
-    states_list.add(stateSetter);
+  StateSetter get states => _states;
+
+  set states(StateSetter value) {
+    _states = value;
   }
 
-  set eliminarState(StateSetter stateSetter) {
-    states_list.remove(stateSetter);
-  }
-
-
-
-  //Refrescar states
+  WidgetsStates({required var state}) : _states = state; //Refrescar states
   updateStates() {
-    for (var element in states_list) {
-      element(() {});
-    }
+    _states(() {});
   }
-
-  WidgetsStates();
-
 }

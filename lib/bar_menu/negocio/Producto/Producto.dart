@@ -1,7 +1,12 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:percent_indicator/circular_percent_indicator.dart';
+import 'package:percent_indicator/linear_percent_indicator.dart';
 import 'package:scasell/MediaQuery.dart';
 
+import '../../../Estilo/Colores.dart';
+import '../../../widgets_comunes/my_Dialogues.dart';
 import '../controllers/negocioController.dart';
 import 'controllers/ProductoController.dart';
 
@@ -22,29 +27,113 @@ class _ProductoState extends State<Producto> {
   late ProductoController productoController = ProductoController(
       documentSnapshotNegocio: documentSnapshotNegocio,
       documentDeletMode: false,
-      setState: setState,
-      context: context);
+      setState_general: setState,
+      context: context,
+      is_all_selected: false);
 
   late List<Widget> traditionalAppBar = [
     //IconButton(onPressed: () => productoController.navegarToCrearProducto(context: context), icon: const Icon(Icons.add_box_outlined)),
     _getOpcionesCrearProducto(),
     _getOpcionesAdminNegocio()
   ];
-  late List<Widget> deletDocumentAppBar = [
-    IconButton(onPressed: () => _select_all_documets(), icon: Icon(Icons.circle_outlined), tooltip: 'Todos',),
-    IconButton(onPressed: () {}, icon: Icon(Icons.delete)),
-    IconButton(onPressed: () => _desactivar_delete_mode(), icon: Icon(Icons.close))
-  ];
 
+  final Icon _all_selected = const Icon(Icons.check_circle);
+  final Icon _no_all_selected = const Icon(Icons.circle_outlined);
 
-  _select_all_documets(){
+  _select_all_documets() {
     productoController.add_all_to_list_documents_para_eliminar();
+    print('All selected?: ${productoController.is_all_selected}');
+    //setState((){});
   }
 
-  _desactivar_delete_mode(){
+  _unselect_documents() {
+    productoController.limpiar_list_documents_para_eliminar();
+  }
+
+  _desactivar_delete_mode() {
     productoController.limpiar_list_documents_para_eliminar();
     productoController.documentDeletMode = false;
+    //setState((){});
   }
+
+  _eliminar_all_doc(BuildContext dilague_context) async {
+    await productoController.delete_document_in_list().whenComplete(() async {
+      await dilague_context.router.pop();
+      final snackBar = SnackBar(
+        content: const Text('documentos eliminados'),
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () => productoController.undo(),
+        ),
+      );
+
+      // Find the ScaffoldMessenger in the widget tree
+      // and use it to show a SnackBar.
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+    });
+  }
+
+  String _titulo = '';
+  var _mensaje = 'Eliminar documentos';
+  _dialogue_actions(BuildContext context) {
+    return <Widget>[
+      TextButton(
+          onPressed: () {
+            context.router.pop();
+          },
+          child: Text('Cancel')),
+      TextButton(
+          onPressed: () => _eliminar_all_doc(context), child: Text('Eliminar'))
+    ];
+  }
+
+  //Cancela el avance de eliminación
+  _dialogue_action_cancelar(BuildContext context) {
+    return <Widget>[
+      TextButton(onPressed: () {}, child: Text('Cancel')),
+    ];
+  }
+
+  late Dialogues dialogue_eliminar_products;
+  late Widget bar_inidcator;
+
+
+  _mostrar_opcion_eliminar_all_docs() {
+    dialogue_eliminar_products = Dialogues(
+        titulo: _titulo,
+        mensaje: _mensaje,
+        actions: _dialogue_actions,
+        context: context);
+
+    dialogue_eliminar_products.mostrarDialog();
+  }
+
+  //Bar to indicate the elimination advance
+
+  _get_delet_mode_app_bar() {
+    return [
+      IconButton(
+        onPressed: () => productoController.is_all_selected
+            ? _unselect_documents()
+            : _select_all_documets(),
+        icon: productoController.is_all_selected == true
+            ? _all_selected
+            : _no_all_selected,
+        tooltip: 'Todos',
+      ),
+      productoController.list_documents_para_eliminar.length > 0
+          ? IconButton(
+              onPressed: () => _mostrar_opcion_eliminar_all_docs(),
+              icon: Icon(Icons.delete))
+          : Text(''),
+      IconButton(
+          onPressed: () => _desactivar_delete_mode(), icon: Icon(Icons.close))
+    ];
+  }
+
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +149,7 @@ class _ProductoState extends State<Producto> {
           productoController.setState = setState;
           return AppBar(
             actions: productoController.documentDeletMode
-                ? deletDocumentAppBar
+                ? _get_delet_mode_app_bar()
                 : traditionalAppBar,
             title: Text(nombreNegocio),
           );
@@ -71,7 +160,7 @@ class _ProductoState extends State<Producto> {
             margin:
                 EdgeInsets.all(Pantalla.getMarginLeftRight(context: context)),
             child: Center(
-              child: productoController.getListaProductos(mounted: mounted),
+              child: productoController.getProductos(mounted: mounted),
             )),
       ),
     );
