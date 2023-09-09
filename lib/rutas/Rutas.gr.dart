@@ -17,6 +17,8 @@ import 'package:cloud_firestore/cloud_firestore.dart' as _i8;
 import 'package:flutter/material.dart' as _i7;
 
 import '../bar_menu/negocio/Negocio.dart' as _i3;
+import '../bar_menu/negocio/Producto/controllers/ProductoController.dart'
+    as _i9;
 import '../bar_menu/negocio/Producto/crear_producto/CrearProducto.dart' as _i5;
 import '../bar_menu/negocio/Producto/Producto.dart' as _i4;
 import '../main.dart' as _i1;
@@ -75,6 +77,7 @@ class AppRouter extends _i6.RootStackRouter {
           key: args.key,
           collectionReferenceProductos: args.collectionReferenceProductos,
           idCodigoDeBarra: args.idCodigoDeBarra,
+          productoController: args.productoController,
         ),
         transitionsBuilder: _i6.TransitionsBuilders.noTransition,
         opaque: true,
@@ -201,6 +204,7 @@ class CrearProductoRouter extends _i6.PageRouteInfo<CrearProductoRouterArgs> {
     _i7.Key? key,
     required _i8.CollectionReference<Object?> collectionReferenceProductos,
     required String? idCodigoDeBarra,
+    required _i9.ProductoController productoController,
   }) : super(
           CrearProductoRouter.name,
           path: 'CrearProducto',
@@ -208,6 +212,7 @@ class CrearProductoRouter extends _i6.PageRouteInfo<CrearProductoRouterArgs> {
             key: key,
             collectionReferenceProductos: collectionReferenceProductos,
             idCodigoDeBarra: idCodigoDeBarra,
+            productoController: productoController,
           ),
         );
 
@@ -219,6 +224,7 @@ class CrearProductoRouterArgs {
     this.key,
     required this.collectionReferenceProductos,
     required this.idCodigoDeBarra,
+    required this.productoController,
   });
 
   final _i7.Key? key;
@@ -227,8 +233,10 @@ class CrearProductoRouterArgs {
 
   final String? idCodigoDeBarra;
 
+  final _i9.ProductoController productoController;
+
   @override
   String toString() {
-    return 'CrearProductoRouterArgs{key: $key, collectionReferenceProductos: $collectionReferenceProductos, idCodigoDeBarra: $idCodigoDeBarra}';
+    return 'CrearProductoRouterArgs{key: $key, collectionReferenceProductos: $collectionReferenceProductos, idCodigoDeBarra: $idCodigoDeBarra, productoController: $productoController}';
   }
 }
