@@ -27,7 +27,7 @@ class _ProductoState extends State<Producto> {
   late ProductoController productoController = ProductoController(
       documentSnapshotNegocio: documentSnapshotNegocio,
       documentDeletMode: false,
-      setState: setState,
+      setState_general: setState,
       context: context,
       is_all_selected: false);
 
@@ -56,22 +56,21 @@ class _ProductoState extends State<Producto> {
     //setState((){});
   }
 
-_eliminar_all_doc(BuildContext dilague_context) async {
+  _eliminar_all_doc(BuildContext dilague_context) async {
+    await productoController.delete_document_in_list().whenComplete(() async {
+      await dilague_context.router.pop();
+      final snackBar = SnackBar(
+        content: const Text('documentos eliminados'),
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () => productoController.undo(),
+        ),
+      );
 
-     await productoController.delete_document_in_list().whenComplete(() async {
-       await dilague_context.router.pop();
-       final snackBar = SnackBar(
-         content: const Text('Yay! A SnackBar!'),
-         action: SnackBarAction(
-           label: 'Undo',
-           onPressed: () => productoController.undo(),
-         ),
-       );
-
-       // Find the ScaffoldMessenger in the widget tree
-       // and use it to show a SnackBar.
-       ScaffoldMessenger.of(context).showSnackBar(snackBar);
-     });
+      // Find the ScaffoldMessenger in the widget tree
+      // and use it to show a SnackBar.
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+    });
   }
 
   String _titulo = '';
@@ -84,8 +83,7 @@ _eliminar_all_doc(BuildContext dilague_context) async {
           },
           child: Text('Cancel')),
       TextButton(
-          onPressed: () =>  _eliminar_all_doc(context),
-          child: Text('Eliminar'))
+          onPressed: () => _eliminar_all_doc(context), child: Text('Eliminar'))
     ];
   }
 
@@ -99,26 +97,6 @@ _eliminar_all_doc(BuildContext dilague_context) async {
   late Dialogues dialogue_eliminar_products;
   late Widget bar_inidcator;
 
-  _crear_elimination_advance_bar(BuildContext context) {
-    bar_inidcator = Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        LinearPercentIndicator(
-          width: Pantalla.getPorcentPanntalla(70, context, 'x'),
-          lineHeight: 3,
-          percent: 0.1,
-          backgroundColor: Colors.grey,
-          progressColor: Colores.colorPrincipal,
-        )
-      ],
-    );
-
-    dialogue_eliminar_products = Dialogues(
-        titulo: _titulo,
-        mensaje: bar_inidcator,
-        actions: _dialogue_action_cancelar,
-        context: context);
-  }
 
   _mostrar_opcion_eliminar_all_docs() {
     dialogue_eliminar_products = Dialogues(
@@ -143,13 +121,19 @@ _eliminar_all_doc(BuildContext dilague_context) async {
             : _no_all_selected,
         tooltip: 'Todos',
       ),
-      IconButton(
-          onPressed: () => _mostrar_opcion_eliminar_all_docs(),
-          icon: Icon(Icons.delete)),
+      productoController.list_documents_para_eliminar.length > 0
+          ? IconButton(
+              onPressed: () => _mostrar_opcion_eliminar_all_docs(),
+              icon: Icon(Icons.delete))
+          : Text(''),
       IconButton(
           onPressed: () => _desactivar_delete_mode(), icon: Icon(Icons.close))
     ];
   }
+
+
+
+
 
   @override
   Widget build(BuildContext context) {

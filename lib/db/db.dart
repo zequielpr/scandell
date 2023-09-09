@@ -62,7 +62,7 @@ class DB {
       {required CollectionReference collectionReferenceProductos,
       required Map<String, dynamic> datosProducto,
       required String? idCodigoBarra}) async {
-    await collectionReferenceProductos.doc().set(datosProducto);
+    await collectionReferenceProductos.doc(idCodigoBarra).set(datosProducto);
   }
 
   static Future<void> update(

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:auto_route/auto_route.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:material_segmented_control/material_segmented_control.dart';
@@ -8,6 +9,8 @@ import 'package:scasell/MediaQuery.dart';
 
 import '../../../../Estilo/Colores.dart';
 import '../../../../Estilo/Theme.dart';
+import '../../../../widgets_comunes/my_Dialogues.dart';
+import '../controllers/ProductoController.dart';
 import 'crear_productos_controllers/AddImageController.dart';
 import 'crear_productos_controllers/CrearProductoController.dart';
 import 'package:image_picker/image_picker.dart';
@@ -15,32 +18,39 @@ import 'package:image_picker/image_picker.dart';
 class CrearProducto extends StatefulWidget {
   final CollectionReference collectionReferenceProductos;
   final String? idCodigoDeBarra;
+  final ProductoController productoController;
   const CrearProducto(
       {Key? key,
       required this.collectionReferenceProductos,
-      required this.idCodigoDeBarra})
+      required this.idCodigoDeBarra,
+      required this.productoController})
       : super(key: key);
 
   @override
   State<CrearProducto> createState() => _CrearProductoState(
       idCodigoDeBarra: idCodigoDeBarra,
-      collectionReferenceProductos: collectionReferenceProductos);
+      collectionReferenceProductos: collectionReferenceProductos,
+      productoController: productoController);
 }
 
 class _CrearProductoState extends State<CrearProducto> {
   final CollectionReference<Object?> collectionReferenceProductos;
   final String? idCodigoDeBarra;
+  final ProductoController productoController;
 
-  _CrearProductoState(
-      {required this.idCodigoDeBarra,
-      required this.collectionReferenceProductos});
+  _CrearProductoState({
+    required this.idCodigoDeBarra,
+    required this.collectionReferenceProductos,
+    required this.productoController,
+  });
 
   late CrearProductoController crearProductoController =
       CrearProductoController(
           colleccionReferenceProductos: collectionReferenceProductos,
           idCodigoBarra: idCodigoDeBarra,
           setState: setState,
-          context: context);
+          context: context,
+          productoController: productoController);
 
   var nombreController = TextEditingController();
 
@@ -64,12 +74,55 @@ class _CrearProductoState extends State<CrearProducto> {
   Map<String, dynamic> datosProducto = {};
   bool _updateProduct = false;
 
-  initState(){
+  initState() {
     _datos_to_textControllers();
   }
 
+  late Dialogues dialogue_eliminar_products;
 
+  _mostrar_opcion_eliminar_all_docs() {
+    dialogue_eliminar_products = Dialogues(
+        titulo: _titulo,
+        mensaje: _mensaje,
+        actions: _dialogue_actions,
+        context: context);
 
+    dialogue_eliminar_products.mostrarDialog();
+  }
+
+  String _titulo = '';
+  var _mensaje = 'Eliminar documentos';
+  _dialogue_actions(BuildContext context) {
+    return <Widget>[
+      TextButton(
+          onPressed: () {
+            context.router.pop();
+          },
+          child: Text('Cancel')),
+      TextButton(
+          onPressed: () => _eliminar_doc(context), child: Text('Eliminar'))
+    ];
+  }
+
+  _eliminar_doc(BuildContext dilague_context) async {
+    await crearProductoController.eliminar_doc().whenComplete(() async {
+      await dilague_context.router.pop();
+      await context.router.pop();
+      final snackBar = SnackBar(
+        content: const Text('documentos eliminados'),
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () => crearProductoController.undo(),
+        ),
+      );
+
+      // Find the ScaffoldMessenger in the widget tree
+      // and use it to show a SnackBar.
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+    });
+  }
+
+  _pop_up_undo_bar() {}
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +131,9 @@ class _CrearProductoState extends State<CrearProducto> {
           title: Text('Crear producto'),
           actions: [
             _updateProduct
-                ? IconButton(onPressed: () {}, icon: Icon(Icons.delete))
+                ? IconButton(
+                    onPressed: () => _mostrar_opcion_eliminar_all_docs(),
+                    icon: Icon(Icons.delete))
                 : Text('')
           ],
         ),
@@ -163,7 +218,7 @@ class _CrearProductoState extends State<CrearProducto> {
     prodcutDocument.get().then((DocumentSnapshot documentSnapshot) => {
           if (documentSnapshot.exists)
             {
-              setState((){}),
+              setState(() {}),
               _updateProduct = true,
               nombreController.text =
                   documentSnapshot['nombre_producto'].toString(),

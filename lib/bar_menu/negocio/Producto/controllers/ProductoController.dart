@@ -17,7 +17,8 @@ class ProductoController {
   bool _documentDeletMode;
   bool _is_all_selected;
   BuildContext _context;
-  var _setState;
+  var _setState_general;
+  late var _setState_app_bar;
   var tileBackground = Colors.transparent;
   var selectionIcon;
   var transparentIcon = const Icon(
@@ -26,12 +27,20 @@ class ProductoController {
   );
   late WidgetsStates _cardProductStates;
   HashSet<DocumentSnapshot> _list_documents_para_eliminar = HashSet();
+
+  HashSet<DocumentSnapshot> get list_documents_para_eliminar =>
+      _list_documents_para_eliminar;
+
+  set list_documents_para_eliminar(HashSet<DocumentSnapshot> value) {
+    _list_documents_para_eliminar = value;
+  }
+
   HashSet<DocumentSnapshot> _list_eliminated_documents = HashSet();
 
-  get setState => _setState;
+  get setState => _setState_app_bar;
 
   set setState(value) {
-    _setState = value;
+    _setState_app_bar = value;
   }
 
   bool get is_all_selected => _is_all_selected;
@@ -45,12 +54,12 @@ class ProductoController {
   set documentDeletMode(bool value) {
     _documentDeletMode = value;
     //Actualiza el arbol de widgets. In this case, the appBar of this section
-    _setState(() {});
+    _setState_app_bar(() {});
   }
 
   limpiar_list_documents_para_eliminar() {
     _list_documents_para_eliminar.clear();
-    _setState(() {}); //update appBar of delete mode
+    _setState_app_bar(() {}); //update appBar of delete mode
     _is_all_selected = false;
     _cardProductStates.updateStates();
   }
@@ -61,19 +70,26 @@ class ProductoController {
 
     _is_all_selected = true;
     _cardProductStates.updateStates();
-    _setState(() {});
+    _setState_app_bar(() {});
+  }
+
+  elim_doc_from_snap_recieved(DocumentSnapshot documentSnapshot){
+    _snap_recieved.remove(documentSnapshot);
+  }
+  update_product_list(){
+    _cardProductStates.updateStates();
   }
 
   HashSet<DocumentSnapshot> _snap_recieved = HashSet();
   Future<void> delete_document_in_list() async {
-    int count = 0;
     for (var document in _list_documents_para_eliminar) {
       await document.reference.delete().whenComplete(() {
-        _snap_recieved.remove(document);
+        elim_doc_from_snap_recieved(document);
         _list_eliminated_documents.add(document);
       });
+      update_product_list();
 
-      _cardProductStates.updateStates();
+
     }
     if (_is_all_selected){
       _documentDeletMode = false;
@@ -81,7 +97,7 @@ class ProductoController {
     }
 
     _is_all_selected = false;
-    _setState(() {});
+    _setState_app_bar(() {});
   }
 
   //Recuperar los documentos eliminados recientemente
@@ -94,7 +110,7 @@ class ProductoController {
     }
     _snap_recieved = _snap_recieved.union(_list_eliminated_documents) as HashSet<DocumentSnapshot<Object?>>;
     _list_eliminated_documents.clear();
-    _cardProductStates.updateStates();
+    update_product_list();
   }
 
   //Comprobar si el producto se encuentra en la lista a eliminar
@@ -114,12 +130,12 @@ class ProductoController {
   ProductoController(
       {required DocumentSnapshot<Object?> documentSnapshotNegocio,
       required documentDeletMode,
-      required setState,
+      required setState_general,
       required BuildContext context,
       required bool is_all_selected})
       : _documentSnapshotNegocio = documentSnapshotNegocio,
         _documentDeletMode = documentDeletMode,
-        _setState = setState,
+        _setState_general = setState_general,
         _context = context,
         _is_all_selected = is_all_selected;
 
@@ -128,7 +144,11 @@ class ProductoController {
         _documentSnapshotNegocio.reference.collection('productos');
     context.router.push(CrearProductoRouter(
         collectionReferenceProductos: _listaProducto,
-        idCodigoDeBarra: idProducto));
+        idCodigoDeBarra: idProducto, productoController: this));
+  }
+
+  update_genaral_state(){
+    _setState_general((){});
   }
 
   scanearproducto({required BuildContext context, required mounted}) async {
@@ -188,7 +208,7 @@ class ProductoController {
       }
 
       setState(() {}); //State where the list of products is
-      _setState(() {}); // State of the appBar
+      _setState_app_bar(() {}); // State of the appBar
     } else {
       navegarToCrearProducto(context: _context, idProducto: documento.id);
     }
@@ -291,9 +311,11 @@ class ProductoController {
         print('object');
         if (snapshot.connectionState == ConnectionState.done) {
           print('object');
+          _snap_recieved.clear();
           _snap_recieved.addAll(snapshot.data!.docs);
           return MyStatefulBuilder(
             dispose: () {
+              print('Widget disposed');
               //WidgetsStates.states_list.clear();
             },
             builder: (BuildContext context, StateSetter setState) {

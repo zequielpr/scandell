@@ -1,11 +1,12 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:scasell/bar_menu/negocio/Producto/controllers/ProductoController.dart';
 
 import '../../../../../db/db.dart';
 
 class CrearProductoController {
-  var _colleccionReferenceProductos;
+  CollectionReference _colleccionReferenceProductos;
   String? _idCodigoBarra;
   BuildContext _context;
   static int _campoEmty = 0;
@@ -14,18 +15,41 @@ class CrearProductoController {
   static double precio_compra = 0;
   static double precio_venta = 0;
   static double stock = 0;
+  ProductoController _productoController;
 
   CrearProductoController(
       {required CollectionReference<Object?> colleccionReferenceProductos,
       required String? idCodigoBarra,
       required setState,
-      required BuildContext context})
+      required BuildContext context,
+      required ProductoController productoController})
       : _colleccionReferenceProductos = colleccionReferenceProductos,
         _idCodigoBarra = idCodigoBarra,
         _setState = setState,
-        _context = context;
+        _context = context,
+        _productoController = productoController;
 
-  //Para ser utilizado en tests
+  DocumentReference? _documentReference;
+  late var _data_eliminated_product;
+  Future<void> eliminar_doc() async {
+    _documentReference = _colleccionReferenceProductos.doc(_idCodigoBarra);
+    await _safe_data();
+    await _documentReference!.delete();
+    _productoController.update_genaral_state();
+  }
+
+  Future<void> _safe_data() async {
+    await _documentReference
+        ?.get()
+        .then((snap) => {_data_eliminated_product = snap.data()});
+  }
+
+  Future<void> undo() async {
+    await _colleccionReferenceProductos
+        .doc(_idCodigoBarra)
+        .set(_data_eliminated_product);
+    _productoController.update_genaral_state();
+  }
 
   crearProducto({required Map<String, dynamic> datosProducto}) async {
     _comprobarDatos(datosProducto: datosProducto);
