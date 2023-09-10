@@ -48,13 +48,12 @@ class DB {
         .set({'url_img': img_url});
   }
 
-  static Stream<QuerySnapshot<Map<String, dynamic>>> listarNegocios(
+  static CollectionReference listarNegocios(
       {required String idUsuario}) {
     var _listaNegocio = db
         .collection('usuarios')
         .doc(idUsuario)
-        .collection('negocios')
-        .snapshots(includeMetadataChanges: true);
+        .collection('negocios');
     return _listaNegocio;
   }
 

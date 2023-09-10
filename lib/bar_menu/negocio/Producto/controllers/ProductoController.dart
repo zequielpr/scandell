@@ -352,6 +352,7 @@ class ProductoController {
                           ],
                         ),
                         dense: true,
+                        splashColor: Colores.color_selection,
                         trailing: _documentDeletMode
                             ? selectionIcon
                             : transparentIcon,

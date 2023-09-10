@@ -5,6 +5,7 @@ import 'package:scasell/MediaQuery.dart';
 import 'package:scasell/widgets_comunes/ShowModal.dart';
 
 import '../../db/db.dart';
+import 'Producto/Producto.dart';
 import 'controllers/negocioController.dart';
 
 class Negocio extends StatefulWidget {
@@ -21,14 +22,30 @@ class _NegocioState extends State<Negocio> {
   int error = 0;
   var styleTextoError = const TextStyle(color: Colors.red);
   var setStateShowModal;
-  late NegocioController negocioController = NegocioController('id');
+  late NegocioController negocioController = NegocioController('id', context, setState);
   ButtonStyle buttonStyle = ButtonStyle(
       backgroundColor: MaterialStateProperty.all(Colors.transparent),
       elevation: MaterialStateProperty.all(0));
 
 
+  initState(){
+
+    print('init');
+  }
+  @override
+  void dispose() {
+    print('dispose');
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant Negocio oldWidget) {
+    print('did');
+    super.didUpdateWidget(oldWidget);
+  }
   @override
   Widget build(BuildContext context) {
+    negocioController.context = context;
     valores = AppLocalizations.of(context);
     return Scaffold(
         appBar: AppBar(
@@ -45,6 +62,8 @@ class _NegocioState extends State<Negocio> {
         ),
         body: negocioController.listarNegocio(buttonStyle: buttonStyle, vistaCrearNegocio:  vistaCrearNegocio, context: context));
   }
+
+
 
 
 

@@ -16,9 +16,10 @@ import 'package:auto_route/empty_router_widgets.dart' as _i2;
 import 'package:cloud_firestore/cloud_firestore.dart' as _i8;
 import 'package:flutter/material.dart' as _i7;
 
+import '../bar_menu/negocio/controllers/negocioController.dart' as _i9;
 import '../bar_menu/negocio/Negocio.dart' as _i3;
 import '../bar_menu/negocio/Producto/controllers/ProductoController.dart'
-    as _i9;
+    as _i10;
 import '../bar_menu/negocio/Producto/crear_producto/CrearProducto.dart' as _i5;
 import '../bar_menu/negocio/Producto/Producto.dart' as _i4;
 import '../main.dart' as _i1;
@@ -63,6 +64,7 @@ class AppRouter extends _i6.RootStackRouter {
         child: _i4.Producto(
           key: args.key,
           documentoNegocio: args.documentoNegocio,
+          negocioController: args.negocioController,
         ),
         transitionsBuilder: _i6.TransitionsBuilders.noTransition,
         opaque: true,
@@ -169,12 +171,14 @@ class ProductoRouter extends _i6.PageRouteInfo<ProductoRouterArgs> {
   ProductoRouter({
     _i7.Key? key,
     required _i8.DocumentSnapshot<Object?> documentoNegocio,
+    required _i9.NegocioController negocioController,
   }) : super(
           ProductoRouter.name,
           path: 'Producto',
           args: ProductoRouterArgs(
             key: key,
             documentoNegocio: documentoNegocio,
+            negocioController: negocioController,
           ),
         );
 
@@ -185,15 +189,18 @@ class ProductoRouterArgs {
   const ProductoRouterArgs({
     this.key,
     required this.documentoNegocio,
+    required this.negocioController,
   });
 
   final _i7.Key? key;
 
   final _i8.DocumentSnapshot<Object?> documentoNegocio;
 
+  final _i9.NegocioController negocioController;
+
   @override
   String toString() {
-    return 'ProductoRouterArgs{key: $key, documentoNegocio: $documentoNegocio}';
+    return 'ProductoRouterArgs{key: $key, documentoNegocio: $documentoNegocio, negocioController: $negocioController}';
   }
 }
 
@@ -204,7 +211,7 @@ class CrearProductoRouter extends _i6.PageRouteInfo<CrearProductoRouterArgs> {
     _i7.Key? key,
     required _i8.CollectionReference<Object?> collectionReferenceProductos,
     required String? idCodigoDeBarra,
-    required _i9.ProductoController productoController,
+    required _i10.ProductoController productoController,
   }) : super(
           CrearProductoRouter.name,
           path: 'CrearProducto',
@@ -233,7 +240,7 @@ class CrearProductoRouterArgs {
 
   final String? idCodigoDeBarra;
 
-  final _i9.ProductoController productoController;
+  final _i10.ProductoController productoController;
 
   @override
   String toString() {

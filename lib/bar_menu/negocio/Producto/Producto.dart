@@ -11,16 +11,18 @@ import '../controllers/negocioController.dart';
 import 'controllers/ProductoController.dart';
 
 class Producto extends StatefulWidget {
+  final NegocioController negocioController;
   final DocumentSnapshot documentoNegocio;
-  const Producto({Key? key, required this.documentoNegocio}) : super(key: key);
+  const Producto({Key? key, required this.documentoNegocio, required this.negocioController}) : super(key: key);
 
   @override
-  State<Producto> createState() => _ProductoState(documentoNegocio);
+  State<Producto> createState() => _ProductoState(documentoNegocio, negocioController);
 }
 
 class _ProductoState extends State<Producto> {
   DocumentSnapshot<Object?> documentSnapshotNegocio;
-  _ProductoState(this.documentSnapshotNegocio);
+  final NegocioController negocioController;
+  _ProductoState(this.documentSnapshotNegocio, this.negocioController);
 
   late String nombreNegocio = NegocioController.getNombreNegocio(
       documentSnapshotNegocio: documentSnapshotNegocio);
@@ -34,7 +36,7 @@ class _ProductoState extends State<Producto> {
   late List<Widget> traditionalAppBar = [
     //IconButton(onPressed: () => productoController.navegarToCrearProducto(context: context), icon: const Icon(Icons.add_box_outlined)),
     _getOpcionesCrearProducto(),
-    _getOpcionesAdminNegocio()
+    negocioController.getOpcionesAdminNegocio(doc_negocio: documentSnapshotNegocio.reference)
   ];
 
   final Icon _all_selected = const Icon(Icons.check_circle);
@@ -44,6 +46,19 @@ class _ProductoState extends State<Producto> {
     productoController.add_all_to_list_documents_para_eliminar();
     print('All selected?: ${productoController.is_all_selected}');
     //setState((){});
+  }
+
+  //para mostrar el mensaje en el contexto actual
+  late BuildContext negocio_context = negocioController.context;
+  initState(){
+    negocio_context = negocioController.context;
+    negocioController.context = context;
+    super.initState();
+  }
+
+  didChangeDependencies(){
+    negocioController.context = negocio_context;
+    //print('data ${context.routeData.parent?.router.notifyAll(forceUrlRebuild: true)}');
   }
 
   _unselect_documents() {
