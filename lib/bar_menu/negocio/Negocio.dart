@@ -28,21 +28,7 @@ class _NegocioState extends State<Negocio> {
       elevation: MaterialStateProperty.all(0));
 
 
-  initState(){
 
-    print('init');
-  }
-  @override
-  void dispose() {
-    print('dispose');
-    super.dispose();
-  }
-
-  @override
-  void didUpdateWidget(covariant Negocio oldWidget) {
-    print('did');
-    super.didUpdateWidget(oldWidget);
-  }
   @override
   Widget build(BuildContext context) {
     negocioController.context = context;

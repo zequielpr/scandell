@@ -36,7 +36,7 @@ class _ProductoState extends State<Producto> {
   late List<Widget> traditionalAppBar = [
     //IconButton(onPressed: () => productoController.navegarToCrearProducto(context: context), icon: const Icon(Icons.add_box_outlined)),
     _getOpcionesCrearProducto(),
-    negocioController.getOpcionesAdminNegocio(doc_negocio: documentSnapshotNegocio.reference)
+    negocioController.getOpcionesAdminNegocio(doc_negocio: documentSnapshotNegocio)
   ];
 
   final Icon _all_selected = const Icon(Icons.check_circle);

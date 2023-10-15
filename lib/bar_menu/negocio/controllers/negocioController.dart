@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
@@ -21,6 +23,10 @@ class NegocioController {
   }
 
   StateSetter _setterState;
+  late StateSetter _lista_negocio_state;
+  bool delete_mode = false;
+  bool all_selected = false;
+  late HashSet<DocumentSnapshot> negocios = HashSet();
 
   NegocioController(
     this._idUsuario, this._context, this._setterState
@@ -52,14 +58,16 @@ class NegocioController {
     }
   }
 
-  Future<void>_eliminar_negocio({required DocumentReference doc_negocio, required BuildContext context_dialogue}) async{
-    await doc_negocio.delete();
+  Future<void>_eliminar_negocio({required DocumentSnapshot doc_negocio, required BuildContext context_dialogue}) async{
+    await doc_negocio.reference.delete().whenComplete(() => negocios.remove(doc_negocio));
     context_dialogue.router.pop();
-    _setterState((){});
+
+    _lista_negocio_state((){});
+    //_setterState((){});
     _context.router.pop();
   }
 
-  getOpcionesAdminNegocio({required DocumentReference doc_negocio}) {
+  getOpcionesAdminNegocio({required DocumentSnapshot doc_negocio}) {
     return StatefulBuilder(
         builder: (BuildContext context, StateSetter setState) {
           return PopupMenuButton<MenuOpcionesAdminNegocio>(
@@ -72,7 +80,7 @@ class NegocioController {
         });
   }
 
-  _eliminar_option({required DocumentReference doc_negocio}){
+  _eliminar_option({required DocumentSnapshot doc_negocio}){
     return PopupMenuItem<MenuOpcionesAdminNegocio>(
       value: MenuOpcionesAdminNegocio.Eliminar,
       child: Row(
@@ -81,7 +89,7 @@ class NegocioController {
       onTap: () async => _mostrar_opcion_eliminar_negocio(doc_negocio: doc_negocio),
     );
   }
-  _editar_nombre({required DocumentReference doc_negocio}){
+  _editar_nombre({required DocumentSnapshot doc_negocio}){
     return PopupMenuItem<MenuOpcionesAdminNegocio>(
       value: MenuOpcionesAdminNegocio.CambiaNombre,
       onTap: () => {},
@@ -95,7 +103,7 @@ class NegocioController {
   //Mostrar opcion para eliminar negocio.
   String _titulo = 'Eliminar negocio';
   var _mensaje = 'Al eliminar este negocio, no será posible recuperarlo';
-  static late DocumentReference _doc_to_elim;
+  static late DocumentSnapshot _doc_to_elim;
   _dialogue_actions(BuildContext context) {
     return <Widget>[
       TextButton(
@@ -112,7 +120,7 @@ class NegocioController {
   late Widget bar_inidcator;
 
 
-  _mostrar_opcion_eliminar_negocio({required DocumentReference doc_negocio}) {
+  _mostrar_opcion_eliminar_negocio({required DocumentSnapshot doc_negocio}) {
     _doc_to_elim = doc_negocio;
     dialogue_eliminar_products = Dialogues(
         titulo: _titulo,
@@ -170,30 +178,37 @@ class NegocioController {
           return Text("Loading");
         }
         if (snapshot!.data?.size != 0) {
-          return ListView(
-            children: snapshot.data!.docs.map((DocumentSnapshot document) {
-              Map<String, dynamic> data =
-                  document.data()! as Map<String, dynamic>;
-              return ListTile(
-                onFocusChange: (c){print('object $c');},
-                onTap: () {
-                  _navegarHaciaListaProductos(
-                    context: context,
-                    documentNegocio: document,
-                  );
-                },
-                leading: const Icon(
-                  Icons.storefront,
-                  size: 30,
-                ),
-                title: Text(
-                  data['nombre'],
-                  style: TextStyle(fontSize: 25),
-                ),
-                subtitle: Text(data['direccion']),
-                trailing: getOpcionesAdminNegocio(doc_negocio: document.reference),
-              );
-            }).toList(),
+          negocios.clear();
+          negocios.addAll(snapshot.data!.docs);
+          return StatefulBuilder(
+              builder: (BuildContext context, StateSetter setState) {
+                _lista_negocio_state = setState;
+                return ListView(
+                  children: negocios.map((DocumentSnapshot document) {
+                    Map<String, dynamic> data =
+                    document.data()! as Map<String, dynamic>;
+                    return ListTile(
+                      onFocusChange: (c){print('object $c');},
+                      onTap: () {
+                        _navegarHaciaListaProductos(
+                          context: context,
+                          documentNegocio: document,
+                        );
+                      },
+                      leading: const Icon(
+                        Icons.storefront,
+                        size: 30,
+                      ),
+                      title: Text(
+                        data['nombre'],
+                        style: TextStyle(fontSize: 25),
+                      ),
+                      subtitle: Text(data['direccion']),
+                      trailing: getOpcionesAdminNegocio(doc_negocio: document),
+                    );
+                  }).toList(),
+                );
+              }
           );
         }
 
@@ -210,7 +225,7 @@ class NegocioController {
                         color: Colors.black,
                         size: Pantalla.getPorcentPanntalla(
                             20.0 as double, context, 'x'))),
-                DB.redData()
+                Text('Crear negocio')
               ],
             ),
           ),
