@@ -157,7 +157,7 @@ class ProductoController {
     // Platform messages may fail, so we use a try/catch PlatformException.
     try {
       barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
-          '#ff6666', 'Cancel', true, ScanMode.BARCODE);
+          '#00b4d8', 'Cancel', true, ScanMode.BARCODE);
       if (!mounted) return;
       // si no se optiene un id, no navega a la ruta a la pantalla para crear el producto
       if (barcodeScanRes.isNotEmpty && barcodeScanRes != '-1') {

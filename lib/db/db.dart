@@ -8,7 +8,7 @@ import '../MediaQuery.dart';
 import '../widgets_comunes/ShowModal.dart';
 
 class DB {
-  static final FirebaseFirestore db = FakeFirebaseFirestore();
+  static final FirebaseFirestore db = FirebaseFirestore.instance;
 
   static Future<void> setDatosDocUsuarios({required String idUsuario}) async {
     await db
