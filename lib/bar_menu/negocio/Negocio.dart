@@ -153,12 +153,18 @@ class _NegocioState extends State<Negocio> {
   Widget _getButton(BuildContext context) {
     return Column(
       children: [
-        ElevatedButton(
-            onPressed: () => negocioController.crearNegocio(
-                nombre: nombreController.text,
-                direccion: direccionController.text,
-                comprobarDatos: comprobarDatos, context: context),
-            child: const Text('Guardar')),
+
+        Container(
+          width: Pantalla.getPorcentPanntalla(100, context, 'x'),
+          height: Pantalla.getPorcentPanntalla(7, context, 'y'),
+          child: ElevatedButton(
+              onPressed: () => negocioController.crearNegocio(
+                  nombre: nombreController.text,
+                  direccion: direccionController.text,
+                  comprobarDatos: comprobarDatos, context: context),
+              child: const Text('Guardar')),
+        ),
+
         SizedBox(
           height: Pantalla.getPorcentPanntalla(2, context, 'y'),
         )

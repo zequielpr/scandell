@@ -107,6 +107,10 @@ class NegocioController {
   TextEditingController _direccion_controller = TextEditingController();
   late Widget _body_cambiar_nombre;
   _showModal_update(DocumentSnapshot doc_negocio) {
+    var data = doc_negocio.data()! as Map<String, dynamic>;
+    _nombre_controller.text = data['nombre'];
+    _direccion_controller.text = data['direccion'];
+
     _body_cambiar_nombre =
         StatefulBuilder(builder: (BuildContext context, StateSetter setState) {
       //setStateShowModal = setState;
@@ -179,12 +183,20 @@ class NegocioController {
       required StateSetter setState_showmodal}) {
     return Column(
       children: [
-        ElevatedButton(
-            onPressed: () => _update(
-                doc_negocio: doc_negocio,
-                context: context,
-                setState_showmodal: setState_showmodal),
-            child: const Text('Guardar')),
+
+
+        Container(
+          width: Pantalla.getPorcentPanntalla(100, context, 'x'),
+          height: Pantalla.getPorcentPanntalla(7, context, 'y'),
+          child: ElevatedButton(
+              onPressed: () => _update(
+                  doc_negocio: doc_negocio,
+                  context: context,
+                  setState_showmodal: setState_showmodal),
+              child: const Text('Guardar')),
+        )
+
+        ,
         SizedBox(
           height: Pantalla.getPorcentPanntalla(2, context, 'y'),
         )
@@ -310,8 +322,6 @@ class NegocioController {
               children: negocios.map((DocumentSnapshot document) {
                 Map<String, dynamic> data =
                     document.data()! as Map<String, dynamic>;
-                _nombre_controller.text = data['nombre'];
-                _direccion_controller.text = data['direccion'];
                 return ListTile(
                   onTap: () {
                     _navegarHaciaListaProductos(
