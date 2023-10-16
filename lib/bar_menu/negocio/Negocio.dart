@@ -53,13 +53,12 @@ class _NegocioState extends State<Negocio> {
 
 
 
-
   late Widget vistaCrearNegocio =
   StatefulBuilder(builder: (BuildContext context, StateSetter setState) {
     setStateShowModal = setState;
     return Column(
       mainAxisSize: MainAxisSize.min,
-      children: [_getTitle(), getTextFields(), _getButton(context)],
+      children: [_getTitle('Crear negocio'), getTextFields(), _getButton(context)],
     );
   });
 
@@ -97,7 +96,7 @@ class _NegocioState extends State<Negocio> {
     return const Text('');
   }
 
-  Widget _getTitle() {
+  Widget _getTitle(String title) {
     return Column(
       children: [
         SizedBox(
@@ -116,7 +115,7 @@ class _NegocioState extends State<Negocio> {
         SizedBox(
           height: Pantalla.getPorcentPanntalla(1, context, 'y'),
         ),
-        Text('Crear negocio')
+        Text(title)
       ],
     );
   }
@@ -125,6 +124,7 @@ class _NegocioState extends State<Negocio> {
     return Column(
       children: [
         TextField(
+          maxLength: 30,
           controller: nombreController,
           decoration: const InputDecoration(
               label: Text('Nombre'),
@@ -135,6 +135,7 @@ class _NegocioState extends State<Negocio> {
           height: Pantalla.getPorcentPanntalla(3, context, 'y'),
         ),
         TextField(
+          maxLength: 30,
           controller: direccionController,
           decoration: const InputDecoration(
               label: Text('Dirección'),

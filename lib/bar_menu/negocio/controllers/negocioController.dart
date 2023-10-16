@@ -7,9 +7,11 @@ import 'package:flutter/material.dart';
 import 'package:scasell/db/db.dart';
 import 'package:scasell/rutas/Rutas.gr.dart';
 
+import '../../../Estilo/Colores.dart';
 import '../../../MediaQuery.dart';
 import '../../../widgets_comunes/ShowModal.dart';
 import '../../../widgets_comunes/my_Dialogues.dart';
+import '../../../widgets_comunes/validar_datos.dart';
 import '../Producto/Producto.dart';
 
 class NegocioController {
@@ -24,13 +26,9 @@ class NegocioController {
 
   StateSetter _setterState;
   late StateSetter _lista_negocio_state;
-  bool delete_mode = false;
-  bool all_selected = false;
   late HashSet<DocumentSnapshot> negocios = HashSet();
 
-  NegocioController(
-    this._idUsuario, this._context, this._setterState
-  );
+  NegocioController(this._idUsuario, this._context, this._setterState);
 
   get getIdUsuario => _idUsuario;
   set setIdUsuario(String idUsuario) => _idUsuario;
@@ -54,15 +52,19 @@ class NegocioController {
       Navigator.pop(context);
       await DB.crearNegocio(
           nombre: nombre, idUsuario: _idUsuario, direccion: direccion);
-      _setterState((){});
+      _setterState(() {});
     }
   }
 
-  Future<void>_eliminar_negocio({required DocumentSnapshot doc_negocio, required BuildContext context_dialogue}) async{
-    await doc_negocio.reference.delete().whenComplete(() => negocios.remove(doc_negocio));
+  Future<void> _eliminar_negocio(
+      {required DocumentSnapshot doc_negocio,
+      required BuildContext context_dialogue}) async {
+    await doc_negocio.reference
+        .delete()
+        .whenComplete(() => negocios.remove(doc_negocio));
     context_dialogue.router.pop();
 
-    _lista_negocio_state((){});
+    _lista_negocio_state(() {});
     //_setterState((){});
     _context.router.pop();
   }
@@ -70,35 +72,159 @@ class NegocioController {
   getOpcionesAdminNegocio({required DocumentSnapshot doc_negocio}) {
     return StatefulBuilder(
         builder: (BuildContext context, StateSetter setState) {
-          return PopupMenuButton<MenuOpcionesAdminNegocio>(
-              itemBuilder: (BuildContext context) =>
+      return PopupMenuButton<MenuOpcionesAdminNegocio>(
+          itemBuilder: (BuildContext context) =>
               <PopupMenuEntry<MenuOpcionesAdminNegocio>>[
-                _eliminar_option( doc_negocio: doc_negocio),
-                _editar_nombre(doc_negocio:  doc_negocio)
-
+                _eliminar_option(doc_negocio: doc_negocio),
+                _update_business(doc_negocio: doc_negocio)
               ]);
-        });
+    });
   }
 
-  _eliminar_option({required DocumentSnapshot doc_negocio}){
+  _eliminar_option({required DocumentSnapshot doc_negocio}) {
     return PopupMenuItem<MenuOpcionesAdminNegocio>(
       value: MenuOpcionesAdminNegocio.Eliminar,
       child: Row(
         children: [Icon(Icons.delete), Text('Eliminar')],
       ),
-      onTap: () async => _mostrar_opcion_eliminar_negocio(doc_negocio: doc_negocio),
+      onTap: () async =>
+          _mostrar_opcion_eliminar_negocio(doc_negocio: doc_negocio),
     );
   }
-  _editar_nombre({required DocumentSnapshot doc_negocio}){
+
+  _update_business({required DocumentSnapshot doc_negocio}) {
     return PopupMenuItem<MenuOpcionesAdminNegocio>(
       value: MenuOpcionesAdminNegocio.CambiaNombre,
-      onTap: () => {},
+      onTap: () => _showModal_update(doc_negocio),
       child: Row(
-        children: [Icon(Icons.edit), Text('Cambiar nombre')],
+        children: [Icon(Icons.edit), Text('Actualizar')],
       ),
     );
   }
 
+  //Show showmodal to update business name
+  TextEditingController _nombre_controller = TextEditingController();
+  TextEditingController _direccion_controller = TextEditingController();
+  late Widget _body_cambiar_nombre;
+  _showModal_update(DocumentSnapshot doc_negocio) {
+    _body_cambiar_nombre =
+        StatefulBuilder(builder: (BuildContext context, StateSetter setState) {
+      //setStateShowModal = setState;
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _getTitle('Actualizar'),
+          _get_text_field(),
+          _getButton(
+              doc_negocio: doc_negocio,
+              context: context,
+              setState_showmodal: setState)
+        ],
+      );
+    });
+
+    ShowModal(_body_cambiar_nombre).getShowModla(_context);
+  }
+
+  _getTitle(String title) {
+    return Column(
+      children: [
+        SizedBox(
+          height: Pantalla.getPorcentPanntalla(1, context, 'y'),
+        ),
+        Card(
+          elevation: 0,
+          color: Colores.colorPrincipal,
+          shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(10))),
+          child: Container(
+            width: 100,
+            height: 10,
+          ),
+        ),
+        SizedBox(
+          height: Pantalla.getPorcentPanntalla(1, context, 'y'),
+        ),
+        Text(title)
+      ],
+    );
+  }
+
+  _get_text_field() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        TextField(
+          maxLength: 30,
+          controller: _nombre_controller,
+          decoration: const InputDecoration(
+              label: Text('Nombre'),
+              hintText: 'Escribe el nombre de negocio  aquí'),
+        ),
+        _nombre_controller.text.isEmpty ? advert_nombre : Text(''),
+        TextField(
+          maxLength: 30,
+          controller: _direccion_controller,
+          decoration: const InputDecoration(
+              label: Text('Dirección'), hintText: 'Nueva dirección'),
+        ),
+        _direccion_controller.text.isEmpty ? advert_direccion : Text('')
+      ],
+    );
+  }
+
+  Widget _getButton(
+      {required DocumentSnapshot doc_negocio,
+      required BuildContext context,
+      required StateSetter setState_showmodal}) {
+    return Column(
+      children: [
+        ElevatedButton(
+            onPressed: () => _update(
+                doc_negocio: doc_negocio,
+                context: context,
+                setState_showmodal: setState_showmodal),
+            child: const Text('Guardar')),
+        SizedBox(
+          height: Pantalla.getPorcentPanntalla(2, context, 'y'),
+        )
+      ],
+    );
+  }
+
+  Widget advert_nombre = const Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        'Introduce un nombre',
+        style: TextStyle(color: Colors.red),
+      ));
+  Widget advert_direccion =const Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        'Introduce una dirección',
+        style: TextStyle(color: Colors.red),
+      ));
+
+  _update(
+      {required DocumentSnapshot doc_negocio,
+      required BuildContext context,
+      required StateSetter setState_showmodal}) async {
+    if (!_comprobar_nombre()) {
+      setState_showmodal(() {});
+      return;
+    }
+    context.router.pop();
+    await doc_negocio.reference.update({'nombre': _nombre_controller.text, 'direccion': _direccion_controller.text});
+    _setterState(() {});
+  }
+
+  bool _comprobar_nombre() {
+    if (_nombre_controller.text.isNotEmpty &&
+        _direccion_controller.text.isNotEmpty) {
+      return true;
+    }
+    return false;
+  }
 
   //Mostrar opcion para eliminar negocio.
   String _titulo = 'Eliminar negocio';
@@ -112,13 +238,14 @@ class NegocioController {
           },
           child: Text('Cancel')),
       TextButton(
-          onPressed: () => _eliminar_negocio(doc_negocio: _doc_to_elim, context_dialogue:  context), child: Text('Eliminar'))
+          onPressed: () => _eliminar_negocio(
+              doc_negocio: _doc_to_elim, context_dialogue: context),
+          child: Text('Eliminar'))
     ];
   }
 
   late Dialogues dialogue_eliminar_products;
   late Widget bar_inidcator;
-
 
   _mostrar_opcion_eliminar_negocio({required DocumentSnapshot doc_negocio}) {
     _doc_to_elim = doc_negocio;
@@ -130,11 +257,6 @@ class NegocioController {
 
     dialogue_eliminar_products.mostrarDialog();
   }
-
-
-
-
-
 
   //Comprueba que los textfield no estén vacios
   int _comprobarDatosNegocio(
@@ -155,11 +277,12 @@ class NegocioController {
   Future<void> _navegarHaciaListaProductos(
       {required BuildContext context,
       required DocumentSnapshot documentNegocio}) async {
-    await context.router
-        .push(ProductoRouter(documentoNegocio: documentNegocio, negocioController: this));
+    await context.router.push(ProductoRouter(
+        documentoNegocio: documentNegocio, negocioController: this));
   }
 
   late CollectionReference _listaNegocio;
+
   ///Devuelve una lista con los documentos de todos los negocios contenido en la colección del usuario actual
   FutureBuilder<QuerySnapshot<Object?>> listarNegocio(
       {required ButtonStyle buttonStyle,
@@ -182,34 +305,34 @@ class NegocioController {
           negocios.addAll(snapshot.data!.docs);
           return StatefulBuilder(
               builder: (BuildContext context, StateSetter setState) {
-                _lista_negocio_state = setState;
-                return ListView(
-                  children: negocios.map((DocumentSnapshot document) {
-                    Map<String, dynamic> data =
+            _lista_negocio_state = setState;
+            return ListView(
+              children: negocios.map((DocumentSnapshot document) {
+                Map<String, dynamic> data =
                     document.data()! as Map<String, dynamic>;
-                    return ListTile(
-                      onFocusChange: (c){print('object $c');},
-                      onTap: () {
-                        _navegarHaciaListaProductos(
-                          context: context,
-                          documentNegocio: document,
-                        );
-                      },
-                      leading: const Icon(
-                        Icons.storefront,
-                        size: 30,
-                      ),
-                      title: Text(
-                        data['nombre'],
-                        style: TextStyle(fontSize: 25),
-                      ),
-                      subtitle: Text(data['direccion']),
-                      trailing: getOpcionesAdminNegocio(doc_negocio: document),
+                _nombre_controller.text = data['nombre'];
+                _direccion_controller.text = data['direccion'];
+                return ListTile(
+                  onTap: () {
+                    _navegarHaciaListaProductos(
+                      context: context,
+                      documentNegocio: document,
                     );
-                  }).toList(),
+                  },
+                  leading: const Icon(
+                    Icons.storefront,
+                    size: 30,
+                  ),
+                  title: Text(
+                    data['nombre'],
+                    style: TextStyle(fontSize: 25),
+                  ),
+                  subtitle: Text(data['direccion']),
+                  trailing: getOpcionesAdminNegocio(doc_negocio: document),
                 );
-              }
-          );
+              }).toList(),
+            );
+          });
         }
 
         return Container(
