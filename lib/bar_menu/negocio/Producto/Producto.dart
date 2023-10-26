@@ -13,10 +13,15 @@ import 'controllers/ProductoController.dart';
 class Producto extends StatefulWidget {
   final NegocioController negocioController;
   final DocumentSnapshot documentoNegocio;
-  const Producto({Key? key, required this.documentoNegocio, required this.negocioController}) : super(key: key);
+  const Producto(
+      {Key? key,
+      required this.documentoNegocio,
+      required this.negocioController})
+      : super(key: key);
 
   @override
-  State<Producto> createState() => _ProductoState(documentoNegocio, negocioController);
+  State<Producto> createState() =>
+      _ProductoState(documentoNegocio, negocioController);
 }
 
 class _ProductoState extends State<Producto> {
@@ -36,7 +41,8 @@ class _ProductoState extends State<Producto> {
   late List<Widget> traditionalAppBar = [
     //IconButton(onPressed: () => productoController.navegarToCrearProducto(context: context), icon: const Icon(Icons.add_box_outlined)),
     _getOpcionesCrearProducto(),
-    negocioController.getOpcionesAdminNegocio(doc_negocio: documentSnapshotNegocio)
+    negocioController.getOpcionesAdminNegocio(
+        doc_negocio: documentSnapshotNegocio)
   ];
 
   final Icon _all_selected = const Icon(Icons.check_circle);
@@ -50,13 +56,13 @@ class _ProductoState extends State<Producto> {
 
   //para mostrar el mensaje en el contexto actual
   late BuildContext negocio_context = negocioController.context;
-  initState(){
+  initState() {
     negocio_context = negocioController.context;
     negocioController.context = context;
     super.initState();
   }
 
-  didChangeDependencies(){
+  didChangeDependencies() {
     negocioController.context = negocio_context;
     //print('data ${context.routeData.parent?.router.notifyAll(forceUrlRebuild: true)}');
   }
@@ -112,7 +118,6 @@ class _ProductoState extends State<Producto> {
   late Dialogues dialogue_eliminar_products;
   late Widget bar_inidcator;
 
-
   _mostrar_opcion_eliminar_all_docs() {
     dialogue_eliminar_products = Dialogues(
         titulo: _titulo,
@@ -146,38 +151,87 @@ class _ProductoState extends State<Producto> {
     ];
   }
 
-
-
-
-
   @override
   Widget build(BuildContext context) {
     int _index =
         0; // Make sure this is outside build(), otherwise every setState will chage the value back to 0
 
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize:
-            Size.fromHeight(Pantalla.getPorcentPanntalla(7, context, 'y')),
-        child: StatefulBuilder(
-            builder: (BuildContext context, StateSetter setState) {
-          productoController.setState = setState;
-          return AppBar(
-            actions: productoController.documentDeletMode
-                ? _get_delet_mode_app_bar()
-                : traditionalAppBar,
-            title: Text(nombreNegocio),
-          );
-        }),
-      ),
       body: Center(
-        child: Container(
-            margin:
-                EdgeInsets.all(Pantalla.getMarginLeftRight(context: context)),
-            child: Center(
-              child: productoController.getProductos(mounted: mounted),
-            )),
-      ),
+          child: CustomScrollView(
+        slivers: [
+          StatefulBuilder(
+              builder: (BuildContext context, StateSetter setState) {
+            productoController.setState = setState;
+            return SliverAppBar(
+              floating: true,
+              expandedHeight: Pantalla.getPorcentPanntalla(15, context, 'y'),
+              flexibleSpace: FlexibleSpaceBar(),
+              title: Text(nombreNegocio),
+              actions: productoController.documentDeletMode
+                  ? _get_delet_mode_app_bar()
+                  : traditionalAppBar,
+              bottom: PreferredSize(
+                preferredSize: Size.fromHeight(
+                    Pantalla.getPorcentPanntalla(10, context, 'y')),
+                child: Padding(
+                  padding: EdgeInsets.only(
+                      bottom: Pantalla.getPorcentPanntalla(3, context, 'y')),
+                  child: TextField(
+                    onChanged: (term) =>
+                        productoController.search_product(term),
+                    decoration: InputDecoration(
+
+                        constraints:
+                            const BoxConstraints.expand(width: 300, height: 40),
+                        isDense: true,
+                        suffixIcon: IconButton(
+                          onPressed: () => productoController.scanearproducto(
+                              context: context, mounted: mounted),
+                          icon: const Icon(Icons.camera_alt_outlined),
+                        ),
+                        labelText: "Search",
+                        hintText: "Search",
+                        prefixIcon: const Icon(Icons.search),
+                        border: const OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(25.0)))),
+                  ),
+                ),
+              ),
+            );
+          }),
+          productoController.getProductos(mounted: mounted),
+
+          /*StatefulBuilder(
+              builder: (BuildContext context, StateSetter setState) {
+            return SliverFixedExtentList(
+              itemExtent: 50.0,
+              delegate: SliverChildBuilderDelegate(
+                (BuildContext context, int index) {
+                  return Container(
+                    alignment: Alignment.center,
+                    color: Colors.lightBlue[100 * (index % 9)],
+                    child: Text('List Item $index'),
+                  );
+                },
+              ),
+            );
+          })*/
+
+          /*  SliverFillRemaining(
+            child: Container(
+                margin: EdgeInsets.all(
+                    Pantalla.getMarginLeftRight(context: context)),
+                child: Center(
+                  child: productoController.getProductos(mounted: mounted),
+                )),
+          )*/
+        ],
+      )
+
+          /*,*/
+          ),
     );
   }
 

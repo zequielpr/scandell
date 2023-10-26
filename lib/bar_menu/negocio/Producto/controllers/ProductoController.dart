@@ -26,7 +26,7 @@ class ProductoController {
     Icons.circle_outlined,
     size: 0,
   );
-  late WidgetsStates _cardProductStates;
+  late WidgetsStates _cardsProductStates;
   HashSet<DocumentSnapshot> _list_documents_para_eliminar = HashSet();
 
   HashSet<DocumentSnapshot> get list_documents_para_eliminar =>
@@ -62,7 +62,7 @@ class ProductoController {
     _list_documents_para_eliminar.clear();
     _setState_app_bar(() {}); //update appBar of delete mode
     _is_all_selected = false;
-    _cardProductStates.updateStates();
+    _cardsProductStates.updateStates();
   }
 
   add_all_to_list_documents_para_eliminar() {
@@ -70,15 +70,16 @@ class ProductoController {
     _list_documents_para_eliminar.addAll(_snap_recieved);
 
     _is_all_selected = true;
-    _cardProductStates.updateStates();
+    _cardsProductStates.updateStates();
     _setState_app_bar(() {});
   }
 
-  elim_doc_from_snap_recieved(DocumentSnapshot documentSnapshot){
+  elim_doc_from_snap_recieved(DocumentSnapshot documentSnapshot) {
     _snap_recieved.remove(documentSnapshot);
   }
-  update_product_list(){
-    _cardProductStates.updateStates();
+
+  update_product_list() {
+    _cardsProductStates.updateStates();
   }
 
   HashSet<DocumentSnapshot> _snap_recieved = HashSet();
@@ -89,10 +90,8 @@ class ProductoController {
         _list_eliminated_documents.add(document);
       });
       update_product_list();
-
-
     }
-    if (_is_all_selected){
+    if (_is_all_selected) {
       _documentDeletMode = false;
       _list_documents_para_eliminar.clear();
     }
@@ -102,14 +101,18 @@ class ProductoController {
   }
 
   //Recuperar los documentos eliminados recientemente
-  Future<void>undo() async {
+  Future<void> undo() async {
     print('documentos para recup: ${_list_eliminated_documents.length}');
     Map<String, dynamic> data;
     for (var eliminated_document in _list_eliminated_documents) {
       data = eliminated_document.data()! as Map<String, dynamic>;
-      await _documentSnapshotNegocio.reference.collection('productos').doc(eliminated_document.id).set(data);
+      await _documentSnapshotNegocio.reference
+          .collection('productos')
+          .doc(eliminated_document.id)
+          .set(data);
     }
-    _snap_recieved = _snap_recieved.union(_list_eliminated_documents) as HashSet<DocumentSnapshot<Object?>>;
+    _snap_recieved = _snap_recieved.union(_list_eliminated_documents)
+        as HashSet<DocumentSnapshot<Object?>>;
     _list_eliminated_documents.clear();
     update_product_list();
   }
@@ -145,11 +148,12 @@ class ProductoController {
         _documentSnapshotNegocio.reference.collection('productos');
     context.router.push(CrearProductoRouter(
         collectionReferenceProductos: _listaProducto,
-        idCodigoDeBarra: idProducto, productoController: this));
+        idCodigoDeBarra: idProducto,
+        productoController: this));
   }
 
-  update_genaral_state(){
-    _setState_general((){});
+  update_genaral_state() {
+    _setState_general(() {});
   }
 
   scanearproducto({required BuildContext context, required mounted}) async {
@@ -274,9 +278,68 @@ class ProductoController {
     return Icon(Icons.trending_up, size: 15, color: color_profit);
   }
 
-  getProductos({required var mounted}) {
-    var _listaProducto =
-        _documentSnapshotNegocio.reference.collection('productos').get();
+  _get_product(DocumentSnapshot document, AsyncSnapshot<QuerySnapshot> snapshot,
+      StateSetter setState_list) {
+    Map<String, dynamic> data = document.data()! as Map<String, dynamic>;
+    if (documentDeletMode) {
+      selectionIcon = _comprobar_lista_eliminar(documento: document);
+    }
+    return Column(
+      children: [
+        ListTile(
+          titleAlignment: ListTileTitleAlignment.center,
+          onLongPress: () =>
+              _pulsadoLargo(documento: document, setState: setState_list),
+          onTap: () => _pulsado_corto(
+              documento: document,
+              setState: setState_list,
+              num_elements: snapshot!.data!.size),
+          title: Text(
+            data['nombre_producto'],
+            style: TextStyle(fontSize: 25),
+            overflow: TextOverflow.ellipsis,
+          ),
+          subtitle: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _getPrecioVenta(data, _context),
+              _getProfit(data, _context),
+              _getStock(data, _context)
+            ],
+          ),
+          dense: true,
+          splashColor: Colores.color_selection,
+          trailing: _documentDeletMode ? selectionIcon : transparentIcon,
+          tileColor: _documentDeletMode ? tileBackground : Colors.transparent,
+        ),
+        const Divider(
+          thickness: 1,
+        )
+      ],
+    );
+  }
+
+  String _term = '';
+
+  bool _search_mode = false;
+  search_product(String term) {
+    _term = term.trim();
+
+    if (_term.isEmpty) {
+      _search_mode = false;
+      _setState_general(() {});
+      return;
+    }
+    _search_mode = true;
+
+    _setState_general(() {});
+  }
+
+  Widget getProductos({required var mounted}) {
+    var _listaProducto = _documentSnapshotNegocio.reference
+        .collection('productos')
+        .orderBy('nombre_producto')
+        .startAt([_term]).endAt(['$_term\uf8ff']).get();
 
     return FutureBuilder<QuerySnapshot>(
       future: _listaProducto,
@@ -285,16 +348,27 @@ class ProductoController {
           return Text("Something went wrong");
         }
 
-        if (snapshot.data?.docs.isEmpty == true) {
-          return Container(
+        if (_search_mode && snapshot.data?.docs.isEmpty == true) {
+          return SliverToBoxAdapter(
+              child: Container(
+            height: Pantalla.getPorcentPanntalla(65, context, 'y'),
             child: Center(
+              child: Text('Sin resultados'),
+            ),
+          ));
+        }
+
+        if (snapshot.data?.docs.isEmpty == true) {
+          return SliverToBoxAdapter(
+            child: Container(
+              height: Pantalla.getPorcentPanntalla(65, context, 'y'),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   ElevatedButton(
                       style: ButtonStyle(
                           backgroundColor:
-                          MaterialStateProperty.all(Colors.transparent),
+                              MaterialStateProperty.all(Colors.transparent),
                           elevation: MaterialStateProperty.all(0)),
                       onPressed: () =>
                           scanearproducto(context: _context, mounted: mounted),
@@ -309,9 +383,7 @@ class ProductoController {
           );
         }
 
-        print('object');
         if (snapshot.connectionState == ConnectionState.done) {
-          print('object');
           _snap_recieved.clear();
           _snap_recieved.addAll(snapshot.data!.docs);
           return MyStatefulBuilder(
@@ -320,60 +392,51 @@ class ProductoController {
               //WidgetsStates.states_list.clear();
             },
             builder: (BuildContext context, StateSetter setState) {
-              _cardProductStates = WidgetsStates(state: setState);
-              return ListView(
-                children: _snap_recieved.map((DocumentSnapshot document) {
-                  Map<String, dynamic> data =
-                      document.data()! as Map<String, dynamic>;
-                  if (documentDeletMode) {
-                    selectionIcon =
-                        _comprobar_lista_eliminar(documento: document);
-                  }
-                  return Column(
-                    children: [
-                      ListTile(
-                        onLongPress: () => _pulsadoLargo(
-                            documento: document, setState: setState),
-                        onTap: () => _pulsado_corto(
-                            documento: document,
-                            setState: setState,
-                            num_elements: snapshot!.data!.size),
-                        title: Text(
-                          data['nombre_producto'],
-                          style: TextStyle(fontSize: 25),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        subtitle: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            _getPrecioVenta(data, _context),
-                            _getProfit(data, _context),
-                            _getStock(data, _context)
-                          ],
-                        ),
-                        dense: true,
-                        splashColor: Colores.color_selection,
-                        trailing: _documentDeletMode
-                            ? selectionIcon
-                            : transparentIcon,
-                        tileColor: _documentDeletMode
-                            ? tileBackground
-                            : Colors.transparent,
-                      ),
-                      const Divider(
-                        thickness: 1,
-                      )
-                    ],
-                  );
-                }).toList(),
+              _cardsProductStates = WidgetsStates(state: setState);
+
+              return SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  childCount: _snap_recieved.length,
+                  (BuildContext context, int index) {
+                    return Container(
+                      margin: EdgeInsets.only(
+                          left: Pantalla.getMarginLeftRight(context: context),
+                          right: Pantalla.getMarginLeftRight(context: context)),
+                      child: _get_product(
+                          _snap_recieved.elementAt(index), snapshot, setState),
+                    );
+
+                  },
+                ),
               );
-              ;
+
+              /* return ListView.builder( itemCount: _snap_recieved.length, itemBuilder: (context, int index) {
+                return _get_product(
+                    _snap_recieved.elementAt(index), snapshot, setState);
+              });*/
+              SliverList(
+                // Use a delegate to build items as they're scrolled on screen.
+                delegate: SliverChildBuilderDelegate(
+                  // The builder function returns a ListTile with a title that
+                  // displays the index of the current item.
+                  (context, index) => _get_product(
+                      _snap_recieved.elementAt(index), snapshot, setState),
+                  childCount: _snap_recieved.length,
+                ),
+              );
             },
             key: null,
           );
         }
 
-        return Text("loading");
+        return SliverToBoxAdapter(
+          child: Container(
+            height: Pantalla.getPorcentPanntalla(65, context, 'y'),
+            child: Center(
+              child: Text("loading"),
+            ),
+          ),
+        );
       },
     );
 
