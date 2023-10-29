@@ -4,8 +4,10 @@ import 'package:auto_route/auto_route.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:percent_indicator/linear_percent_indicator.dart';
 import 'package:scasell/rutas/Rutas.gr.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
+import 'package:scasell/widgets_comunes/my_Dialogues.dart';
 
 import '../../../../Estilo/Colores.dart';
 import '../../../../MediaQuery.dart';
@@ -82,19 +84,104 @@ class ProductoController {
     _cardsProductStates.updateStates();
   }
 
+  //Barra de preogreso de eliminación
+  double porcent_elim = 0.1;
+  int doc_para_elim = 0;
+  late StateSetter _bar_progress_state;
+  late BuildContext _bar_progress_cnxt;
+  late var elim_progress = StatefulBuilder(
+    builder: (BuildContext context, StateSetter setState) {
+      _bar_progress_cnxt = context;
+      _bar_progress_state = setState;
+      print('porcentaje: $porcent_elim');
+      porcent_elim = double.parse(porcent_elim.toStringAsFixed(2));
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              LinearPercentIndicator(
+                width: Pantalla.getPorcentPanntalla(60, context, 'x'),
+                lineHeight: 14.0,
+                percent: porcent_elim,
+                barRadius: const Radius.circular(10),
+                backgroundColor: Colors.grey,
+                progressColor: Colores.colorPrincipal,
+              ),
+            ],
+          ),
+          SizedBox(height:Pantalla.getPorcentPanntalla(1, context, 'y') ,),
+          Container(
+            width: Pantalla.getPorcentPanntalla(55, context, 'x'),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "${_list_eliminated_documents.length }/${doc_para_elim}",
+                  style: TextStyle(fontSize: 12.0),
+                ),
+                Text(
+                  "${porcent_elim * 100}%",
+                  style: TextStyle(fontSize: 12.0),
+                )
+              ],
+            ),
+          ),
+        ],
+      );
+    },
+  );
+
+  bool _stop_elim_process = false;
+  _cancel_elim_process() {
+    _stop_elim_process = true;
+  }
+
+  _dialogue_actions(BuildContext context) {
+    return <Widget>[
+      TextButton(
+          onPressed: () {
+            _cancel_elim_process();
+            context.router.pop();
+          },
+          child: Text('Cancel')),
+    ];
+  }
+
+  late Dialogues dialogo_elim_progress = Dialogues(
+      titulo: '',
+      mensaje: elim_progress,
+      actions: _dialogue_actions,
+      context: _context);
+
   HashSet<DocumentSnapshot> _snap_recieved = HashSet();
   Future<void> delete_document_in_list() async {
+    doc_para_elim = _list_documents_para_eliminar.length;
+    _stop_elim_process = false;
+    dialogo_elim_progress.mostrarDialog();
+
     for (var document in _list_documents_para_eliminar) {
+      if (_stop_elim_process) break; //Detiene el proceso de liminación
       await document.reference.delete().whenComplete(() {
         elim_doc_from_snap_recieved(document);
         _list_eliminated_documents.add(document);
+
+        porcent_elim = _list_eliminated_documents.length /
+            list_documents_para_eliminar.length;
       });
+      _bar_progress_state(() {});
       update_product_list();
     }
+
+    _bar_progress_cnxt.router.pop();
+
+
     if (_is_all_selected) {
       _documentDeletMode = false;
       _list_documents_para_eliminar.clear();
     }
+
 
     _is_all_selected = false;
     _setState_app_bar(() {});
@@ -405,7 +492,6 @@ class ProductoController {
                       child: _get_product(
                           _snap_recieved.elementAt(index), snapshot, setState),
                     );
-
                   },
                 ),
               );

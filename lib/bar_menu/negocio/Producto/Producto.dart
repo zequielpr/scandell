@@ -77,9 +77,12 @@ class _ProductoState extends State<Producto> {
     //setState((){});
   }
 
+
+
+
   _eliminar_all_doc(BuildContext dilague_context) async {
+    await dilague_context.router.pop();
     await productoController.delete_document_in_list().whenComplete(() async {
-      await dilague_context.router.pop();
       final snackBar = SnackBar(
         content: const Text('documentos eliminados'),
         action: SnackBarAction(
